@@ -10,21 +10,12 @@
 #    Bash Version - No Dependencies Required
 #    Works on: RHEL 6/7/8/9, CentOS, Solaris 10/11, Ubuntu, Debian
 #    
-#    Scans: Linux, Solaris SPARC, Windows (limited)
+#    Scans: Linux, Solaris SPARC
 #
 #===============================================================================
 
 VERSION="1.0.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-WHITE='\033[1;37m'
-GRAY='\033[0;90m'
-NC='\033[0m' # No Color
 
 # Global variables
 SUBNET=""
@@ -32,8 +23,6 @@ USERNAME=""
 PASSWORD=""
 OUTPUT_FILE=""
 TIMEOUT=10
-SCAN_SSH=true
-SCAN_WINRM=false  # Limited on pure bash
 
 # Detect OS we're running on
 detect_local_os() {
@@ -55,50 +44,48 @@ LOCAL_OS=$(detect_local_os)
 show_banner() {
     clear
     echo ""
-    echo -e "${CYAN}     █████╗ ██╗  ██╗██╗███████╗${NC}"
-    echo -e "${CYAN}    ██╔══██╗╚██╗██╔╝██║██╔════╝${NC}"
-    echo -e "${CYAN}    ███████║ ╚███╔╝ ██║███████╗${NC}"
-    echo -e "${CYAN}    ██╔══██║ ██╔██╗ ██║╚════██║${NC}"
-    echo -e "${CYAN}    ██║  ██║██╔╝ ██╗██║███████║${NC}"
-    echo -e "${CYAN}    ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝${NC}"
+    echo "     █████╗ ██╗  ██╗██╗███████╗"
+    echo "    ██╔══██╗╚██╗██╔╝██║██╔════╝"
+    echo "    ███████║ ╚███╔╝ ██║███████╗"
+    echo "    ██╔══██║ ██╔██╗ ██║╚════██║"
+    echo "    ██║  ██║██╔╝ ██╗██║███████║"
+    echo "    ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝"
     echo ""
-    echo -e "${YELLOW}  ╔═══════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${YELLOW}  ║   AXIS - Asset eXploration & Inventory Scanner            ║${NC}"
-    echo -e "${YELLOW}  ║   Cross-Platform Hardware & Software Inventory Tool       ║${NC}"
-    echo -e "${YELLOW}  ╠═══════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${YELLOW}  ║   Supports: Linux (RHEL) | Solaris SPARC                  ║${NC}"
-    echo -e "${YELLOW}  ║   Air-Gapped Network Ready - No Dependencies Required     ║${NC}"
-    echo -e "${YELLOW}  ╠═══════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${GRAY}  ║   Created by: Yan Carrion                                 ║${NC}"
-    echo -e "${GRAY}  ║   GitHub: github.com/IICarrionII/Axis                     ║${NC}"
-    echo -e "${YELLOW}  ╚═══════════════════════════════════════════════════════════╝${NC}"
+    echo "  ╔═══════════════════════════════════════════════════════════╗"
+    echo "  ║   AXIS - Asset eXploration & Inventory Scanner            ║"
+    echo "  ║   Cross-Platform Hardware & Software Inventory Tool       ║"
+    echo "  ╠═══════════════════════════════════════════════════════════╣"
+    echo "  ║   Supports: Linux (RHEL) | Solaris SPARC                  ║"
+    echo "  ║   Air-Gapped Network Ready - No Dependencies Required     ║"
+    echo "  ╠═══════════════════════════════════════════════════════════╣"
+    echo "  ║   Created by: Yan Carrion                                 ║"
+    echo "  ║   GitHub: github.com/IICarrionII/Axis                     ║"
+    echo "  ╚═══════════════════════════════════════════════════════════╝"
     echo ""
-    echo -e "  Running on: ${GRAY}$LOCAL_OS${NC} | Version: ${GRAY}$VERSION${NC} | Bash Version"
+    echo "  Running on: $LOCAL_OS | Version: $VERSION | Bash Edition"
     echo ""
 }
 
 show_main_menu() {
     show_banner
-    echo -e "${WHITE}  ┌─────────────────────────────────────────────────────────────┐${NC}"
-    echo -e "${WHITE}  │                      MAIN MENU                              │${NC}"
-    echo -e "${WHITE}  ├─────────────────────────────────────────────────────────────┤${NC}"
-    echo -e "${WHITE}  │                                                             │${NC}"
-    echo -e "${GREEN}  │   [1]  Quick Scan (Linux/Solaris)                           │${NC}"
-    echo -e "${GREEN}  │   [2]  Scan with Custom Settings                            │${NC}"
-    echo -e "${WHITE}  │                                                             │${NC}"
-    echo -e "${CYAN}  │   [3]  Configure Settings                                   │${NC}"
-    echo -e "${CYAN}  │   [4]  View Current Settings                                │${NC}"
-    echo -e "${CYAN}  │   [5]  Test Connection to Single Host                       │${NC}"
-    echo -e "${WHITE}  │                                                             │${NC}"
-    echo -e "${YELLOW}  │   [6]  Help / Instructions                                  │${NC}"
-    echo -e "${YELLOW}  │   [7]  About                                                │${NC}"
-    echo -e "${WHITE}  │                                                             │${NC}"
-    echo -e "${RED}  │   [0]  Exit                                                 │${NC}"
-    echo -e "${WHITE}  │                                                             │${NC}"
-    echo -e "${WHITE}  └─────────────────────────────────────────────────────────────┘${NC}"
+    echo "  ┌─────────────────────────────────────────────────────────────┐"
+    echo "  │                      MAIN MENU                              │"
+    echo "  ├─────────────────────────────────────────────────────────────┤"
+    echo "  │                                                             │"
+    echo "  │   [1]  Quick Scan (Linux/Solaris)                           │"
+    echo "  │   [2]  Scan with Custom Settings                            │"
+    echo "  │                                                             │"
+    echo "  │   [3]  Configure Settings                                   │"
+    echo "  │   [4]  View Current Settings                                │"
+    echo "  │   [5]  Test Connection to Single Host                       │"
+    echo "  │                                                             │"
+    echo "  │   [6]  Help / Instructions                                  │"
+    echo "  │   [7]  About                                                │"
+    echo "  │                                                             │"
+    echo "  │   [0]  Exit                                                 │"
+    echo "  │                                                             │"
+    echo "  └─────────────────────────────────────────────────────────────┘"
     echo ""
-    read -p "  Enter your choice: " choice
-    echo "$choice"
 }
 
 show_settings_menu() {
@@ -110,73 +97,75 @@ show_settings_menu() {
     local pass_display="Not Set"
     [[ -n "$PASSWORD" ]] && pass_display="********"
     
-    echo -e "${WHITE}  ┌─────────────────────────────────────────────────────────────┐${NC}"
-    echo -e "${WHITE}  │                   SETTINGS                                  │${NC}"
-    echo -e "${WHITE}  ├─────────────────────────────────────────────────────────────┤${NC}"
-    echo -e "${WHITE}  │                                                             │${NC}"
-    echo -e "${WHITE}  │   [1]  Set Subnet        (Current: $(printf "%-20s" "$subnet_display"))│${NC}"
-    echo -e "${WHITE}  │   [2]  Set Username      (Current: $(printf "%-20s" "$user_display"))│${NC}"
-    echo -e "${WHITE}  │   [3]  Set Password      (Current: $(printf "%-20s" "$pass_display"))│${NC}"
-    echo -e "${WHITE}  │   [4]  Set Output File                                      │${NC}"
-    echo -e "${WHITE}  │   [5]  Set Timeout       (Current: ${TIMEOUT}s)                        │${NC}"
-    echo -e "${WHITE}  │                                                             │${NC}"
-    echo -e "${YELLOW}  │   [0]  Back to Main Menu                                    │${NC}"
-    echo -e "${WHITE}  │                                                             │${NC}"
-    echo -e "${WHITE}  └─────────────────────────────────────────────────────────────┘${NC}"
+    echo "  ┌─────────────────────────────────────────────────────────────┐"
+    echo "  │                      SETTINGS                               │"
+    echo "  ├─────────────────────────────────────────────────────────────┤"
+    echo "  │                                                             │"
+    printf "  │   [1]  Set Subnet        (Current: %-20s) │\n" "$subnet_display"
+    printf "  │   [2]  Set Username      (Current: %-20s) │\n" "$user_display"
+    printf "  │   [3]  Set Password      (Current: %-20s) │\n" "$pass_display"
+    echo "  │   [4]  Set Output File                                      │"
+    printf "  │   [5]  Set Timeout       (Current: %-3s seconds)            │\n" "$TIMEOUT"
+    echo "  │                                                             │"
+    echo "  │   [0]  Back to Main Menu                                    │"
+    echo "  │                                                             │"
+    echo "  └─────────────────────────────────────────────────────────────┘"
     echo ""
-    read -p "  Enter your choice: " choice
-    echo "$choice"
 }
 
 show_help() {
     show_banner
-    echo -e "${WHITE}  ┌─────────────────────────────────────────────────────────────┐${NC}"
-    echo -e "${WHITE}  │                     HELP / INSTRUCTIONS                     │${NC}"
-    echo -e "${WHITE}  └─────────────────────────────────────────────────────────────┘${NC}"
+    echo "  ┌─────────────────────────────────────────────────────────────┐"
+    echo "  │                  HELP / INSTRUCTIONS                        │"
+    echo "  └─────────────────────────────────────────────────────────────┘"
     echo ""
-    echo -e "${CYAN}  QUICK START:${NC}"
+    echo "  QUICK START:"
+    echo "  ─────────────"
     echo "  1. Select option [1] Quick Scan from main menu"
     echo "  2. Enter subnet when prompted (e.g., 192.168.1.0/24)"
     echo "  3. Enter username and password"
     echo "  4. Wait for scan to complete"
     echo "  5. CSV file will be saved automatically"
     echo ""
-    echo -e "${CYAN}  SUPPORTED PLATFORMS:${NC}"
+    echo "  SUPPORTED PLATFORMS:"
+    echo "  ─────────────────────"
     echo "  - Linux (RHEL, CentOS, Fedora, Ubuntu, etc.)"
     echo "  - Solaris 10/11 SPARC"
     echo ""
-    echo -e "${CYAN}  REQUIREMENTS:${NC}"
+    echo "  REQUIREMENTS:"
+    echo "  ──────────────"
     echo "  - SSH access to target systems"
-    echo "  - User account with sudo privileges"
-    echo "  - sshpass (optional, for automated password input)"
-    echo "    If sshpass not available, you'll enter password per host"
+    echo "  - User account with sudo privileges (for hardware info)"
+    echo "  - sshpass (optional - for automated password input)"
+    echo "    If sshpass not available, uses SSH key authentication"
     echo ""
-    echo -e "${CYAN}  NO DEPENDENCIES NEEDED:${NC}"
+    echo "  NO DEPENDENCIES NEEDED:"
+    echo "  ────────────────────────"
     echo "  This Bash version uses only built-in Linux/Solaris tools:"
-    echo "  - bash, ssh, awk, grep, sed"
+    echo "  bash, ssh, awk, grep, sed - all pre-installed!"
     echo ""
-    echo -e "${CYAN}  GITHUB:${NC}"
-    echo "  https://github.com/IICarrionII/Axis"
+    echo "  GITHUB: https://github.com/IICarrionII/Axis"
     echo ""
     read -p "  Press Enter to continue..."
 }
 
 show_about() {
     show_banner
-    echo -e "${WHITE}  ┌─────────────────────────────────────────────────────────────┐${NC}"
-    echo -e "${WHITE}  │                        ABOUT                                │${NC}"
-    echo -e "${WHITE}  └─────────────────────────────────────────────────────────────┘${NC}"
+    echo "  ┌─────────────────────────────────────────────────────────────┐"
+    echo "  │                         ABOUT                               │"
+    echo "  └─────────────────────────────────────────────────────────────┘"
     echo ""
-    echo -e "${CYAN}  AXIS - Asset eXploration & Inventory Scanner${NC}"
-    echo -e "${WHITE}  Version: $VERSION (Bash Edition)${NC}"
+    echo "  AXIS - Asset eXploration & Inventory Scanner"
+    echo "  Version: $VERSION (Bash Edition)"
     echo ""
-    echo -e "${YELLOW}  Created by: Yan Carrion${NC}"
-    echo -e "${YELLOW}  GitHub: https://github.com/IICarrionII/Axis${NC}"
+    echo "  Created by: Yan Carrion"
+    echo "  GitHub: https://github.com/IICarrionII/Axis"
     echo ""
-    echo -e "${WHITE}  A cross-platform hardware and software inventory tool${NC}"
-    echo -e "${WHITE}  designed for air-gapped enterprise networks.${NC}"
+    echo "  A cross-platform hardware and software inventory tool"
+    echo "  designed for air-gapped enterprise networks."
     echo ""
-    echo -e "${CYAN}  Features:${NC}"
+    echo "  FEATURES:"
+    echo "  ──────────"
     echo "  - Zero dependencies - uses only built-in tools"
     echo "  - Runs on Linux and Solaris"
     echo "  - Scans Linux and Solaris SPARC targets"
@@ -184,9 +173,9 @@ show_about() {
     echo "  - Menu-driven interface"
     echo "  - Exports to CSV format"
     echo ""
-    echo -e "${GRAY}  ─────────────────────────────────────────────────────────────${NC}"
-    echo -e "${GRAY}  Licensed under MIT License${NC}"
-    echo -e "${GRAY}  ─────────────────────────────────────────────────────────────${NC}"
+    echo "  ─────────────────────────────────────────────────────────────"
+    echo "  Licensed under MIT License"
+    echo "  ─────────────────────────────────────────────────────────────"
     echo ""
     read -p "  Press Enter to continue..."
 }
@@ -229,25 +218,33 @@ generate_ip_range() {
     echo "${ip_list[@]}"
 }
 
-# Test if port is open (using /dev/tcp or nc)
+# Test if port is open
 test_port() {
     local ip="$1"
     local port="$2"
-    local timeout="${3:-2}"
+    local timeout_val="${3:-2}"
     
-    # Try /dev/tcp first (bash built-in)
-    if (echo >/dev/tcp/"$ip"/"$port") 2>/dev/null; then
-        return 0
+    # Try timeout + bash /dev/tcp
+    if command -v timeout &> /dev/null; then
+        timeout "$timeout_val" bash -c "echo >/dev/tcp/$ip/$port" 2>/dev/null
+        return $?
     fi
     
     # Fallback to nc if available
     if command -v nc &> /dev/null; then
-        nc -z -w "$timeout" "$ip" "$port" &> /dev/null
+        nc -z -w "$timeout_val" "$ip" "$port" &> /dev/null
         return $?
     fi
     
-    # Fallback to timeout + bash
-    timeout "$timeout" bash -c "echo >/dev/tcp/$ip/$port" 2>/dev/null
+    # Last resort - direct bash (may hang)
+    (echo >/dev/tcp/"$ip"/"$port") 2>/dev/null &
+    local pid=$!
+    sleep "$timeout_val"
+    if kill -0 "$pid" 2>/dev/null; then
+        kill "$pid" 2>/dev/null
+        return 1
+    fi
+    wait "$pid" 2>/dev/null
     return $?
 }
 
@@ -296,62 +293,29 @@ collect_linux_info() {
     local pass="$3"
     
     local cmd='
-hostname 2>/dev/null || echo "Unknown"
-echo "---MARKER---"
-systemd-detect-virt 2>/dev/null | grep -qv none && echo "Yes" || echo "No"
-echo "---MARKER---"
-sudo dmidecode -s system-manufacturer 2>/dev/null || echo "Unknown"
-echo "---MARKER---"
-sudo dmidecode -s system-product-name 2>/dev/null || echo "Unknown"
-echo "---MARKER---"
-sudo dmidecode -s system-serial-number 2>/dev/null || echo "Unknown"
-echo "---MARKER---"
-source /etc/os-release 2>/dev/null && echo "$PRETTY_NAME" || uname -sr
-echo "---MARKER---"
-uname -r
-echo "---MARKER---"
-free -h 2>/dev/null | awk "/^Mem:/ {print \$2}" || echo "Unknown"
-echo "---MARKER---"
-sudo dmidecode -t memory 2>/dev/null | grep "Type:" | grep -v "Error" | head -1 | awk "{print \$2}" || echo "Unknown"
-echo "---MARKER---"
-sudo dmidecode -s bios-version 2>/dev/null || echo "Unknown"
+HOSTNAME=$(hostname 2>/dev/null || echo "Unknown")
+VIRTUAL=$(systemd-detect-virt 2>/dev/null | grep -qv none && echo "Yes" || echo "No")
+MANUFACTURER=$(sudo dmidecode -s system-manufacturer 2>/dev/null || echo "Unknown")
+MODEL=$(sudo dmidecode -s system-product-name 2>/dev/null || echo "Unknown")
+SERIAL=$(sudo dmidecode -s system-serial-number 2>/dev/null || echo "Unknown")
+OS=$(source /etc/os-release 2>/dev/null && echo "$PRETTY_NAME" || uname -sr)
+KERNEL=$(uname -r)
+MEMORY=$(free -h 2>/dev/null | awk "/^Mem:/ {print \$2}" || echo "Unknown")
+MEMTYPE=$(sudo dmidecode -t memory 2>/dev/null | grep "Type:" | grep -v "Error" | head -1 | awk "{print \$2}" || echo "Unknown")
+FIRMWARE=$(sudo dmidecode -s bios-version 2>/dev/null || echo "Unknown")
+echo "${HOSTNAME}|${VIRTUAL}|${MANUFACTURER}|${MODEL}|${SERIAL}|${OS}|${KERNEL}|${MEMORY}|${MEMTYPE}|${FIRMWARE}"
 '
     
     local output
     output=$(ssh_command "$ip" "$user" "$pass" "$cmd" "$TIMEOUT")
     
     if [[ -z "$output" ]]; then
-        echo "FAILED:Connection failed"
+        echo "Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Linux|Failed: Connection failed"
         return 1
     fi
     
-    # Parse output
-    IFS='---MARKER---' read -ra fields <<< "$output"
-    
-    local hostname=$(echo "${fields[0]}" | tr -d '\n' | xargs)
-    local virtual=$(echo "${fields[1]}" | tr -d '\n' | xargs)
-    local manufacturer=$(echo "${fields[2]}" | tr -d '\n' | xargs)
-    local model=$(echo "${fields[3]}" | tr -d '\n' | xargs)
-    local serial=$(echo "${fields[4]}" | tr -d '\n' | xargs)
-    local os=$(echo "${fields[5]}" | tr -d '\n' | xargs)
-    local kernel=$(echo "${fields[6]}" | tr -d '\n' | xargs)
-    local memory=$(echo "${fields[7]}" | tr -d '\n' | xargs)
-    local memtype=$(echo "${fields[8]}" | tr -d '\n' | xargs)
-    local firmware=$(echo "${fields[9]}" | tr -d '\n' | xargs)
-    
-    # Clean up empty values
-    [[ -z "$hostname" ]] && hostname="Unknown"
-    [[ -z "$virtual" ]] && virtual="Unknown"
-    [[ -z "$manufacturer" ]] && manufacturer="Unknown"
-    [[ -z "$model" ]] && model="Unknown"
-    [[ -z "$serial" ]] && serial="Unknown"
-    [[ -z "$os" ]] && os="Unknown"
-    [[ -z "$kernel" ]] && kernel="Unknown"
-    [[ -z "$memory" ]] && memory="Unknown"
-    [[ -z "$memtype" ]] && memtype="Unknown"
-    [[ -z "$firmware" ]] && firmware="Unknown"
-    
-    echo "$hostname|$virtual|$manufacturer|$model|$serial|$os|$kernel|$memory|$memtype|$firmware|Linux|Success"
+    # Clean and return
+    echo "$output|Linux|Success"
 }
 
 # Collect Solaris system info
@@ -361,62 +325,29 @@ collect_solaris_info() {
     local pass="$3"
     
     local cmd='
-hostname 2>/dev/null || echo "Unknown"
-echo "---MARKER---"
-/usr/sbin/virtinfo 2>/dev/null | grep -q "virtual" && echo "Yes" || echo "No"
-echo "---MARKER---"
-sudo /usr/sbin/prtconf -pv 2>/dev/null | grep "banner-name" | head -1 | cut -d"'"'"'" -f2 || echo "Unknown"
-echo "---MARKER---"
-sudo /usr/sbin/prtdiag 2>/dev/null | head -1 | sed "s/System Configuration: //" || /usr/sbin/prtconf -b 2>/dev/null | head -1 || echo "Unknown"
-echo "---MARKER---"
-sudo /usr/sbin/sneep 2>/dev/null || /usr/bin/hostid 2>/dev/null || echo "Unknown"
-echo "---MARKER---"
-echo "SunOS $(uname -r) $(cat /etc/release 2>/dev/null | head -1 | xargs)"
-echo "---MARKER---"
-uname -v
-echo "---MARKER---"
-sudo /usr/sbin/prtconf 2>/dev/null | grep "Memory size" | awk "{print \$3, \$4}" || echo "Unknown"
-echo "---MARKER---"
-echo "Unknown"
-echo "---MARKER---"
-sudo /usr/sbin/prtdiag -v 2>/dev/null | grep "OBP" | head -1 | awk "{print \$2}" || echo "Unknown"
+HOSTNAME=$(hostname 2>/dev/null || echo "Unknown")
+VIRTUAL=$(/usr/sbin/virtinfo 2>/dev/null | grep -q "virtual" && echo "Yes" || echo "No")
+MANUFACTURER=$(sudo /usr/sbin/prtconf -pv 2>/dev/null | grep "banner-name" | head -1 | cut -d"'"'"'" -f2 || echo "Unknown")
+MODEL=$(sudo /usr/sbin/prtdiag 2>/dev/null | head -1 | sed "s/System Configuration: //" || echo "Unknown")
+SERIAL=$(sudo /usr/sbin/sneep 2>/dev/null || /usr/bin/hostid 2>/dev/null || echo "Unknown")
+OS="SunOS $(uname -r) $(cat /etc/release 2>/dev/null | head -1 | xargs)"
+KERNEL=$(uname -v)
+MEMORY=$(sudo /usr/sbin/prtconf 2>/dev/null | grep "Memory size" | awk "{print \$3, \$4}" || echo "Unknown")
+MEMTYPE="Unknown"
+FIRMWARE=$(sudo /usr/sbin/prtdiag -v 2>/dev/null | grep "OBP" | head -1 | awk "{print \$2}" || echo "Unknown")
+echo "${HOSTNAME}|${VIRTUAL}|${MANUFACTURER}|${MODEL}|${SERIAL}|${OS}|${KERNEL}|${MEMORY}|${MEMTYPE}|${FIRMWARE}"
 '
     
     local output
     output=$(ssh_command "$ip" "$user" "$pass" "$cmd" "$TIMEOUT")
     
     if [[ -z "$output" ]]; then
-        echo "FAILED:Connection failed"
+        echo "Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Solaris|Failed: Connection failed"
         return 1
     fi
     
-    # Parse output (same as Linux)
-    IFS='---MARKER---' read -ra fields <<< "$output"
-    
-    local hostname=$(echo "${fields[0]}" | tr -d '\n' | xargs)
-    local virtual=$(echo "${fields[1]}" | tr -d '\n' | xargs)
-    local manufacturer=$(echo "${fields[2]}" | tr -d '\n' | xargs)
-    local model=$(echo "${fields[3]}" | tr -d '\n' | xargs)
-    local serial=$(echo "${fields[4]}" | tr -d '\n' | xargs)
-    local os=$(echo "${fields[5]}" | tr -d '\n' | xargs)
-    local kernel=$(echo "${fields[6]}" | tr -d '\n' | xargs)
-    local memory=$(echo "${fields[7]}" | tr -d '\n' | xargs)
-    local memtype=$(echo "${fields[8]}" | tr -d '\n' | xargs)
-    local firmware=$(echo "${fields[9]}" | tr -d '\n' | xargs)
-    
-    # Clean up empty values
-    [[ -z "$hostname" ]] && hostname="Unknown"
-    [[ -z "$virtual" ]] && virtual="Unknown"
-    [[ -z "$manufacturer" ]] && manufacturer="Unknown"
-    [[ -z "$model" ]] && model="Unknown"
-    [[ -z "$serial" ]] && serial="Unknown"
-    [[ -z "$os" ]] && os="Unknown"
-    [[ -z "$kernel" ]] && kernel="Unknown"
-    [[ -z "$memory" ]] && memory="Unknown"
-    [[ -z "$memtype" ]] && memtype="Unknown"
-    [[ -z "$firmware" ]] && firmware="Unknown"
-    
-    echo "$hostname|$virtual|$manufacturer|$model|$serial|$os|$kernel|$memory|$memtype|$firmware|Solaris|Success"
+    # Clean and return
+    echo "$output|Solaris|Success"
 }
 
 #===============================================================================
@@ -426,19 +357,19 @@ sudo /usr/sbin/prtdiag -v 2>/dev/null | grep "OBP" | head -1 | awk "{print \$2}"
 get_required_settings() {
     if [[ -z "$SUBNET" ]]; then
         echo ""
-        echo -e "${YELLOW}  Subnet is required.${NC}"
+        echo "  Subnet is required."
         read -p "  Enter subnet (e.g., 192.168.1.0/24): " SUBNET
     fi
     
     if [[ -z "$USERNAME" ]]; then
         echo ""
-        echo -e "${YELLOW}  Username is required.${NC}"
+        echo "  Username is required."
         read -p "  Enter username: " USERNAME
     fi
     
     if [[ -z "$PASSWORD" ]]; then
         echo ""
-        echo -e "${YELLOW}  Password is required.${NC}"
+        echo "  Password is required."
         read -sp "  Enter password: " PASSWORD
         echo ""
     fi
@@ -456,60 +387,60 @@ get_required_settings() {
 
 test_single_host() {
     show_banner
-    echo -e "${WHITE}  ┌─────────────────────────────────────────────────────────────┐${NC}"
-    echo -e "${WHITE}  │              TEST CONNECTION TO SINGLE HOST                 │${NC}"
-    echo -e "${WHITE}  └─────────────────────────────────────────────────────────────┘${NC}"
+    echo "  ┌─────────────────────────────────────────────────────────────┐"
+    echo "  │              TEST CONNECTION TO SINGLE HOST                 │"
+    echo "  └─────────────────────────────────────────────────────────────┘"
     echo ""
     
     read -p "  Enter IP address to test: " test_ip
     
     [[ -z "$USERNAME" ]] && read -p "  Enter username: " USERNAME
-    [[ -z "$PASSWORD" ]] && read -sp "  Enter password: " PASSWORD && echo ""
+    [[ -z "$PASSWORD" ]] && { read -sp "  Enter password: " PASSWORD; echo ""; }
     
     echo ""
-    echo -e "  Testing connection to ${CYAN}$test_ip${NC}..."
+    echo "  Testing connection to $test_ip..."
     echo ""
     
     # Test SSH port
-    echo -n "  [1/3] Checking SSH port (22)..."
+    echo -n "  [1/3] Checking SSH port (22)... "
     if test_port "$test_ip" 22 2; then
-        echo -e " ${GREEN}OPEN${NC}"
+        echo "OPEN"
         local ssh_open=true
     else
-        echo -e " ${RED}CLOSED${NC}"
+        echo "CLOSED"
         local ssh_open=false
     fi
     
     # Test authentication
-    echo -n "  [2/3] Testing authentication..."
+    echo -n "  [2/3] Testing authentication... "
     if [[ "$ssh_open" == "true" ]]; then
         local test_result
         test_result=$(ssh_command "$test_ip" "$USERNAME" "$PASSWORD" "echo CONNECTION_SUCCESS && hostname" 15)
         
         if [[ "$test_result" == *"CONNECTION_SUCCESS"* ]]; then
-            echo -e " ${GREEN}SUCCESS${NC}"
+            echo "SUCCESS"
             echo ""
-            echo -e "  ${CYAN}Hostname:${NC} $(echo "$test_result" | tail -1)"
+            echo "  Hostname: $(echo "$test_result" | tail -1)"
         else
-            echo -e " ${RED}FAILED${NC}"
+            echo "FAILED"
             if ! has_sshpass; then
                 echo ""
-                echo -e "  ${YELLOW}Note: sshpass not installed. Using key-based auth only.${NC}"
-                echo -e "  ${YELLOW}Password auth requires sshpass or SSH keys.${NC}"
+                echo "  Note: sshpass not installed. Using key-based auth only."
+                echo "  Password auth requires sshpass or SSH keys."
             fi
         fi
     else
-        echo -e " ${YELLOW}SKIPPED (port closed)${NC}"
+        echo "SKIPPED (port closed)"
     fi
     
     # Detect OS
-    echo -n "  [3/3] Detecting OS type..."
+    echo -n "  [3/3] Detecting OS type... "
     if [[ "$ssh_open" == "true" ]]; then
         local os_type
         os_type=$(detect_remote_os "$test_ip" "$USERNAME" "$PASSWORD")
-        echo -e " ${GREEN}$os_type${NC}"
+        echo "$os_type"
     else
-        echo -e " ${YELLOW}SKIPPED${NC}"
+        echo "SKIPPED"
     fi
     
     echo ""
@@ -518,31 +449,29 @@ test_single_host() {
 
 view_current_settings() {
     show_banner
-    echo -e "${WHITE}  ┌─────────────────────────────────────────────────────────────┐${NC}"
-    echo -e "${WHITE}  │                 CURRENT SETTINGS                            │${NC}"
-    echo -e "${WHITE}  ├─────────────────────────────────────────────────────────────┤${NC}"
-    echo -e "${WHITE}  │                                                             │${NC}"
-    printf "${WHITE}  │  Subnet:        %-43s│${NC}\n" "${SUBNET:-Not Set}"
-    printf "${WHITE}  │  Username:      %-43s│${NC}\n" "${USERNAME:-Not Set}"
-    printf "${WHITE}  │  Password:      %-43s│${NC}\n" "$(if [[ -n "$PASSWORD" ]]; then echo "********"; else echo "Not Set"; fi)"
-    printf "${WHITE}  │  Output File:   %-43s│${NC}\n" "${OUTPUT_FILE:-Auto-generate}"
-    printf "${WHITE}  │  Timeout:       %-43s│${NC}\n" "${TIMEOUT} seconds"
-    echo -e "${WHITE}  │                                                             │${NC}"
     
-    # Show tool availability
-    local ssh_tool="ssh (native)"
     local sshpass_status="Not Available"
     has_sshpass && sshpass_status="Available"
     
-    printf "${WHITE}  │  SSH Tool:      %-43s│${NC}\n" "$ssh_tool"
-    printf "${WHITE}  │  sshpass:       %-43s│${NC}\n" "$sshpass_status"
-    echo -e "${WHITE}  │                                                             │${NC}"
-    echo -e "${WHITE}  └─────────────────────────────────────────────────────────────┘${NC}"
+    echo "  ┌─────────────────────────────────────────────────────────────┐"
+    echo "  │                  CURRENT SETTINGS                           │"
+    echo "  ├─────────────────────────────────────────────────────────────┤"
+    echo "  │                                                             │"
+    printf "  │  Subnet:        %-43s│\n" "${SUBNET:-Not Set}"
+    printf "  │  Username:      %-43s│\n" "${USERNAME:-Not Set}"
+    printf "  │  Password:      %-43s│\n" "$(if [[ -n "$PASSWORD" ]]; then echo "********"; else echo "Not Set"; fi)"
+    printf "  │  Output File:   %-43s│\n" "${OUTPUT_FILE:-Auto-generate}"
+    printf "  │  Timeout:       %-43s│\n" "${TIMEOUT} seconds"
+    echo "  │                                                             │"
+    printf "  │  SSH Tool:      %-43s│\n" "ssh (native)"
+    printf "  │  sshpass:       %-43s│\n" "$sshpass_status"
+    echo "  │                                                             │"
+    echo "  └─────────────────────────────────────────────────────────────┘"
     echo ""
     
     if ! has_sshpass; then
-        echo -e "${YELLOW}  Note: sshpass not installed. Password authentication requires${NC}"
-        echo -e "${YELLOW}  either sshpass or SSH key-based authentication.${NC}"
+        echo "  Note: sshpass not installed. Password authentication requires"
+        echo "  either sshpass or SSH key-based authentication."
         echo ""
     fi
     
@@ -551,22 +480,22 @@ view_current_settings() {
 
 start_scan() {
     show_banner
-    echo -e "${WHITE}  ┌─────────────────────────────────────────────────────────────┐${NC}"
-    echo -e "${WHITE}  │                    STARTING SCAN                            │${NC}"
-    echo -e "${WHITE}  └─────────────────────────────────────────────────────────────┘${NC}"
+    echo "  ┌─────────────────────────────────────────────────────────────┐"
+    echo "  │                     STARTING SCAN                           │"
+    echo "  └─────────────────────────────────────────────────────────────┘"
     echo ""
     
     # Get required settings
     if ! get_required_settings; then
-        echo -e "${RED}  Missing required settings. Please configure first.${NC}"
+        echo "  Missing required settings. Please configure first."
         read -p "  Press Enter to continue..."
         return
     fi
     
     echo ""
-    echo -e "  Subnet: ${WHITE}$SUBNET${NC}"
-    echo -e "  Username: ${WHITE}$USERNAME${NC}"
-    echo -e "  Output: ${WHITE}$OUTPUT_FILE${NC}"
+    echo "  Subnet:   $SUBNET"
+    echo "  Username: $USERNAME"
+    echo "  Output:   $OUTPUT_FILE"
     echo ""
     
     read -p "  Proceed with scan? (Y/N): " confirm
@@ -575,25 +504,31 @@ start_scan() {
     fi
     
     echo ""
-    echo -e "  ${YELLOW}Generating IP list...${NC}"
+    echo "  Generating IP list..."
     
     # Generate IP list
     local ip_array
     read -ra ip_array <<< "$(generate_ip_range "$SUBNET")"
     local total_ips=${#ip_array[@]}
     
-    echo -e "  Total IPs: ${GREEN}$total_ips${NC}"
+    echo "  Total IPs: $total_ips"
     
     # Phase 1: Discover SSH hosts
     echo ""
-    echo -e "  ${CYAN}Phase 1: Discovering SSH hosts...${NC}"
+    echo "  Phase 1: Discovering SSH hosts..."
+    echo ""
     
     local ssh_hosts=()
     local count=0
     
     for ip in "${ip_array[@]}"; do
         ((count++))
-        printf "\r  Scanning: %d/%d (%.0f%%)" "$count" "$total_ips" "$(echo "scale=0; $count * 100 / $total_ips" | bc 2>/dev/null || echo 0)"
+        
+        # Progress update every 10 IPs
+        if (( count % 10 == 0 )) || (( count == total_ips )); then
+            local pct=$((count * 100 / total_ips))
+            echo -ne "\r  Scanning: $count/$total_ips ($pct%)   "
+        fi
         
         if test_port "$ip" 22 1; then
             ssh_hosts+=("$ip")
@@ -601,22 +536,23 @@ start_scan() {
     done
     
     echo ""
-    echo -e "  SSH hosts found: ${GREEN}${#ssh_hosts[@]}${NC}"
+    echo ""
+    echo "  SSH hosts found: ${#ssh_hosts[@]}"
     
     if [[ ${#ssh_hosts[@]} -eq 0 ]]; then
         echo ""
-        echo -e "${YELLOW}  No SSH hosts found!${NC}"
+        echo "  No SSH hosts found!"
         read -p "  Press Enter to continue..."
         return
     fi
     
     # Phase 2: Collect information
     echo ""
-    echo -e "  ${CYAN}Phase 2: Collecting system information...${NC}"
+    echo "  Phase 2: Collecting system information..."
     
     local total_hosts=${#ssh_hosts[@]}
     local est_time=$((total_hosts / 2))
-    echo -e "  ${GRAY}Estimated time: $est_time - $((est_time * 2)) minutes${NC}"
+    echo "  Estimated time: $est_time - $((est_time * 2)) minutes"
     echo ""
     
     # Create CSV header
@@ -628,12 +564,12 @@ start_scan() {
     
     for ip in "${ssh_hosts[@]}"; do
         ((count++))
-        printf "  [%d/%d] %s" "$count" "$total_hosts" "$ip"
+        echo -n "  [$count/$total_hosts] $ip"
         
         # Detect OS
         local os_type
         os_type=$(detect_remote_os "$ip" "$USERNAME" "$PASSWORD")
-        printf " [%s]" "$os_type"
+        echo -n " [$os_type]"
         
         # Collect info based on OS
         local result
@@ -646,39 +582,84 @@ start_scan() {
                 ;;
             *)
                 result=$(collect_linux_info "$ip" "$USERNAME" "$PASSWORD")
-                os_type="Unknown-SSH"
                 ;;
         esac
         
-        # Parse result
-        if [[ "$result" == FAILED:* ]]; then
-            local error="${result#FAILED:}"
-            echo -e " ${RED}✗${NC}"
-            echo "\"Server\",\"Unknown\",\"$ip\",\"Unknown\",\"Unknown\",\"Unknown\",\"Unknown\",\"Unknown\",\"Unknown\",\"Unknown\",\"Unknown\",\"Unknown\",\"$os_type\",\"Failed: $error\"" >> "$OUTPUT_FILE"
-            ((fail_count++))
-        else
-            IFS='|' read -ra info <<< "$result"
-            local hostname="${info[0]}"
-            echo -e " ${GREEN}✓ $hostname${NC}"
-            echo "\"Server\",\"${info[0]}\",\"$ip\",\"${info[1]}\",\"${info[2]}\",\"${info[3]}\",\"${info[4]}\",\"${info[5]}\",\"${info[9]}\",\"${info[7]}\",\"${info[8]}\",\"${info[6]}\",\"${info[10]}\",\"${info[11]}\"" >> "$OUTPUT_FILE"
+        # Parse result - split by |
+        IFS='|' read -ra fields <<< "$result"
+        
+        local hostname="${fields[0]:-Unknown}"
+        local virtual="${fields[1]:-Unknown}"
+        local manufacturer="${fields[2]:-Unknown}"
+        local model="${fields[3]:-Unknown}"
+        local serial="${fields[4]:-Unknown}"
+        local os="${fields[5]:-Unknown}"
+        local kernel="${fields[6]:-Unknown}"
+        local memory="${fields[7]:-Unknown}"
+        local memtype="${fields[8]:-Unknown}"
+        local firmware="${fields[9]:-Unknown}"
+        local ostype="${fields[10]:-Unknown}"
+        local status="${fields[11]:-Unknown}"
+        
+        # Write to CSV
+        echo "\"Server\",\"$hostname\",\"$ip\",\"$virtual\",\"$manufacturer\",\"$model\",\"$serial\",\"$os\",\"$firmware\",\"$memory\",\"$memtype\",\"$kernel\",\"$ostype\",\"$status\"" >> "$OUTPUT_FILE"
+        
+        if [[ "$status" == "Success" ]]; then
+            echo " [OK] $hostname"
             ((success_count++))
+        else
+            echo " [FAILED]"
+            ((fail_count++))
         fi
     done
     
     # Show results
     echo ""
-    echo -e "  ${CYAN}═══════════════════════════════════════════════════════════${NC}"
-    echo -e "                         ${CYAN}RESULTS${NC}"
-    echo -e "  ${CYAN}═══════════════════════════════════════════════════════════${NC}"
+    echo "  ═══════════════════════════════════════════════════════════"
+    echo "                          RESULTS"
+    echo "  ═══════════════════════════════════════════════════════════"
     echo ""
-    echo -e "  ${GREEN}✓ Saved: $OUTPUT_FILE${NC}"
+    echo "  Saved: $OUTPUT_FILE"
     echo ""
-    echo -e "  Total scanned:  ${WHITE}$total_hosts${NC}"
-    echo -e "  Successful:     ${GREEN}$success_count${NC}"
-    echo -e "  Failed:         ${RED}$fail_count${NC}"
+    echo "  Total scanned:  $total_hosts"
+    echo "  Successful:     $success_count"
+    echo "  Failed:         $fail_count"
     echo ""
     
     read -p "  Press Enter to continue..."
+}
+
+configure_settings() {
+    while true; do
+        show_settings_menu
+        read -p "  Enter your choice: " settings_choice
+        
+        case "$settings_choice" in
+            1)
+                read -p "  Enter subnet (e.g., 192.168.1.0/24): " SUBNET
+                ;;
+            2)
+                read -p "  Enter username: " USERNAME
+                ;;
+            3)
+                read -sp "  Enter password: " PASSWORD
+                echo ""
+                ;;
+            4)
+                read -p "  Enter output file path: " OUTPUT_FILE
+                ;;
+            5)
+                read -p "  Enter timeout in seconds: " TIMEOUT
+                ;;
+            0)
+                break
+                ;;
+            *)
+                echo "  Invalid option. Please try again."
+                sleep 1
+                ;;
+        esac
+    done
 }
 
 #===============================================================================
@@ -687,8 +668,8 @@ start_scan() {
 
 main() {
     while true; do
-        local choice
-        choice=$(show_main_menu)
+        show_main_menu
+        read -p "  Enter your choice: " choice
         
         case "$choice" in
             1)
@@ -698,22 +679,7 @@ main() {
                 start_scan
                 ;;
             3)
-                # Settings menu
-                local settings_loop=true
-                while $settings_loop; do
-                    local settings_choice
-                    settings_choice=$(show_settings_menu)
-                    
-                    case "$settings_choice" in
-                        1) read -p "  Enter subnet (e.g., 192.168.1.0/24): " SUBNET ;;
-                        2) read -p "  Enter username: " USERNAME ;;
-                        3) read -sp "  Enter password: " PASSWORD; echo "" ;;
-                        4) read -p "  Enter output file path: " OUTPUT_FILE ;;
-                        5) read -p "  Enter timeout in seconds: " TIMEOUT ;;
-                        0) settings_loop=false ;;
-                        *) ;;
-                    esac
-                done
+                configure_settings
                 ;;
             4)
                 view_current_settings
@@ -729,15 +695,17 @@ main() {
                 ;;
             0)
                 show_banner
-                echo -e "  ${CYAN}Thank you for using AXIS!${NC}"
+                echo "  Thank you for using AXIS!"
                 echo ""
-                echo -e "  ${GRAY}GitHub: https://github.com/IICarrionII/Axis${NC}"
+                echo "  GitHub: https://github.com/IICarrionII/Axis"
                 echo ""
-                echo -e "  ${YELLOW}Goodbye!${NC}"
+                echo "  Goodbye!"
                 echo ""
                 exit 0
                 ;;
             *)
+                echo "  Invalid option. Please enter 0-7."
+                sleep 1
                 ;;
         esac
     done
