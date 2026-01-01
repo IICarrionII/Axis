@@ -2,9 +2,14 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue.svg)](https://docs.microsoft.com/en-us/powershell/)
+[![Bash](https://img.shields.io/badge/Bash-4.0%2B-green.svg)](https://www.gnu.org/software/bash/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20Solaris-lightgrey.svg)]()
 
 A cross-platform, menu-driven hardware and software inventory scanner designed for air-gapped enterprise networks. AXIS collects detailed system information from Linux, Solaris SPARC, and Windows systems without requiring internet connectivity.
+
+**Two versions available:**
+- **`Axis.ps1`** - PowerShell version (Windows, or Linux/Solaris with PowerShell)
+- **`Axis.sh`** - Pure Bash version (Linux/Solaris - **ZERO dependencies**)
 
 ```
      ___   ___  __ ____  _____
@@ -42,7 +47,7 @@ A cross-platform, menu-driven hardware and software inventory scanner designed f
 
 ## 🚀 Quick Start
 
-### On Windows
+### On Windows (PowerShell version)
 
 1. Download `Axis.ps1` and `plink.exe` to the same folder
 2. Open PowerShell and navigate to the folder
@@ -50,33 +55,46 @@ A cross-platform, menu-driven hardware and software inventory scanner designed f
 4. Select option `[1]` for Quick Scan
 5. Enter subnet, username, and password when prompted
 
-### On Linux (RHEL 8/9)
+### On Linux/Solaris (Bash version - RECOMMENDED)
+
+**No installation required!** The Bash version uses only built-in tools.
 
 ```bash
-# Install dependencies
-sudo dnf install -y powershell sshpass
+# Make executable
+chmod +x Axis.sh
 
 # Run AXIS
+./Axis.sh
+```
+
+That's it! No PowerShell, no sshpass, no dependencies needed.
+
+### On Linux (PowerShell version - alternative)
+
+```bash
+# Only if you prefer PowerShell and have it installed
 pwsh ./Axis.ps1
 ```
 
 ## 📦 Requirements
 
-### Running on Windows
+### Bash Version (`Axis.sh`) - Linux/Solaris
+
+| Requirement | Notes |
+|-------------|-------|
+| Bash 4.0+ | Pre-installed on all Linux/Solaris |
+| SSH client | Pre-installed (`ssh`) |
+| **That's it!** | No other dependencies! |
+
+**Optional:** `sshpass` for automated password input. Without it, AXIS uses SSH key authentication.
+
+### PowerShell Version (`Axis.ps1`) - Windows
 
 | Requirement | Notes |
 |-------------|-------|
 | Windows 10/11 or Server 2016+ | Required |
 | PowerShell 5.1+ | Built-in |
 | plink.exe | For SSH scanning - [Download from PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html) |
-
-### Running on Linux
-
-| Requirement | Notes |
-|-------------|-------|
-| RHEL 8/9, CentOS, Fedora | Or compatible distro |
-| PowerShell 7+ | `sudo dnf install powershell` |
-| sshpass | `sudo dnf install sshpass` |
 
 ### Target Systems
 
@@ -132,7 +150,8 @@ Enable-PSRemoting -Force
 
 ```
 Axis/
-├── Axis.ps1              # Main scanner script
+├── Axis.ps1              # PowerShell version (Windows)
+├── Axis.sh               # Bash version (Linux/Solaris) - NO DEPENDENCIES
 ├── README.md             # This file
 ├── LICENSE               # MIT License
 ├── CHANGELOG.md          # Version history

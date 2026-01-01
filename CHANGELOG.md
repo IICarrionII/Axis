@@ -9,16 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial release of AXIS (Asset eXploration & Inventory Scanner)
+- **Two versions:**
+  - `Axis.ps1` - PowerShell version for Windows
+  - `Axis.sh` - Pure Bash version for Linux/Solaris (ZERO dependencies)
 - Cross-platform support (Windows, Linux, Solaris)
 - Menu-driven user interface
-- Linux scanning via SSH (plink on Windows, native ssh on Linux)
+- Linux scanning via SSH
 - Solaris 10/11 SPARC support
-- Windows scanning via WinRM
+- Windows scanning via WinRM (PowerShell version only)
 - Auto-accept SSH host keys for air-gapped networks
 - CSV export functionality
 - Single host connection testing
-- Configurable timeout and thread settings
+- Configurable timeout settings
 - Progress indicators during scanning
+
+### Bash Version Features
+- Zero dependencies - uses only built-in Linux/Solaris tools
+- Works on RHEL 6/7/8/9, CentOS, Solaris 10/11
+- No PowerShell or sshpass required
+- Portable - just copy and run
 
 ### Supported Platforms (Run From)
 - Windows 10/11

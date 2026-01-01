@@ -66,11 +66,12 @@ function Show-Banner {
     Clear-Host
     
     Write-Host ""
-    Write-Host "     ___   ___  __ ____  _____" -ForegroundColor Cyan
-    Write-Host "    /   |  \  \/ //  _/ / ___/" -ForegroundColor Cyan
-    Write-Host "   / /| |   \  /  / /   \__ \ " -ForegroundColor Cyan
-    Write-Host "  / ___ |   / / _/ /   ___/ / " -ForegroundColor Cyan
-    Write-Host " /_/  |_|  /_/ /___/  /____/  " -ForegroundColor Cyan
+    Write-Host "     █████╗ ██╗  ██╗██╗███████╗" -ForegroundColor Cyan
+    Write-Host "    ██╔══██╗╚██╗██╔╝██║██╔════╝" -ForegroundColor Cyan
+    Write-Host "    ███████║ ╚███╔╝ ██║███████╗" -ForegroundColor Cyan
+    Write-Host "    ██╔══██║ ██╔██╗ ██║╚════██║" -ForegroundColor Cyan
+    Write-Host "    ██║  ██║██╔╝ ██╗██║███████║" -ForegroundColor Cyan
+    Write-Host "    ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  ╔═══════════════════════════════════════════════════════════╗" -ForegroundColor Yellow
     Write-Host "  ║   AXIS - Asset eXploration & Inventory Scanner            ║" -ForegroundColor Yellow
