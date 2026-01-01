@@ -1,0 +1,29 @@
+# AXIS .gitignore
+
+# Output files
+*.csv
+AXIS_Inventory_*.csv
+
+# Windows executables (download separately)
+plink.exe
+plink64.exe
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# PowerShell module cache
+PSModulePath/
