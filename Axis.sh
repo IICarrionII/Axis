@@ -7,14 +7,16 @@
 #    Created by: Yan Carrion
 #    GitHub: https://github.com/IICarrionII/Axis
 #    
-#    Bash Version - No Dependencies Required
-#    Works on: RHEL 6/7/8/9, CentOS, Solaris 10/11, Ubuntu, Debian
+#    Bash Version - Self-Contained / No System Dependencies Required
 #    
-#    Scans: Linux, Solaris SPARC
+#    Run From: RHEL 6/7/8/9, CentOS, Solaris 10/11, macOS (for testing)
+#    Scans:    Linux, Solaris SPARC
 #
 #===============================================================================
 
 VERSION="1.0.0"
+
+# Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Global variables
@@ -22,17 +24,65 @@ SUBNET=""
 USERNAME=""
 PASSWORD=""
 OUTPUT_FILE=""
-TIMEOUT=10
+TIMEOUT=15
+
+# Tool paths - check local folder first, then system
+SSHPASS_CMD=""
+EXPECT_CMD=""
+SSH_CMD=""
+
+#===============================================================================
+# TOOL DETECTION - Check local ./tools folder first, then system PATH
+#===============================================================================
+
+init_tools() {
+    # Check for sshpass
+    if [[ -x "$SCRIPT_DIR/tools/sshpass" ]]; then
+        SSHPASS_CMD="$SCRIPT_DIR/tools/sshpass"
+    elif [[ -x "$SCRIPT_DIR/sshpass" ]]; then
+        SSHPASS_CMD="$SCRIPT_DIR/sshpass"
+    elif command -v sshpass &> /dev/null; then
+        SSHPASS_CMD="$(command -v sshpass)"
+    fi
+    
+    # Check for expect
+    if [[ -x "$SCRIPT_DIR/tools/expect" ]]; then
+        EXPECT_CMD="$SCRIPT_DIR/tools/expect"
+    elif [[ -x "$SCRIPT_DIR/expect" ]]; then
+        EXPECT_CMD="$SCRIPT_DIR/expect"
+    elif command -v expect &> /dev/null; then
+        EXPECT_CMD="$(command -v expect)"
+    fi
+    
+    # Check for ssh
+    if command -v ssh &> /dev/null; then
+        SSH_CMD="$(command -v ssh)"
+    fi
+}
+
+has_sshpass() {
+    [[ -n "$SSHPASS_CMD" && -x "$SSHPASS_CMD" ]]
+}
+
+has_expect() {
+    [[ -n "$EXPECT_CMD" && -x "$EXPECT_CMD" ]]
+}
+
+has_ssh() {
+    [[ -n "$SSH_CMD" && -x "$SSH_CMD" ]]
+}
 
 # Detect OS we're running on
 detect_local_os() {
-    if [[ "$(uname -s)" == "SunOS" ]]; then
-        echo "Solaris"
-    elif [[ "$(uname -s)" == "Linux" ]]; then
-        echo "Linux"
-    else
-        echo "Unknown"
-    fi
+    local uname_out
+    uname_out="$(uname -s)"
+    
+    case "$uname_out" in
+        Linux*)   echo "Linux" ;;
+        Darwin*)  echo "macOS" ;;
+        SunOS*)   echo "Solaris" ;;
+        *)        echo "Unknown ($uname_out)" ;;
+    esac
 }
 
 LOCAL_OS=$(detect_local_os)
@@ -56,7 +106,7 @@ show_banner() {
     echo "  ║   Cross-Platform Hardware & Software Inventory Tool       ║"
     echo "  ╠═══════════════════════════════════════════════════════════╣"
     echo "  ║   Supports: Linux (RHEL) | Solaris SPARC                  ║"
-    echo "  ║   Air-Gapped Network Ready - No Dependencies Required     ║"
+    echo "  ║   Air-Gapped Network Ready - Self-Contained               ║"
     echo "  ╠═══════════════════════════════════════════════════════════╣"
     echo "  ║   Created by: Yan Carrion                                 ║"
     echo "  ║   GitHub: github.com/IICarrionII/Axis                     ║"
@@ -132,17 +182,16 @@ show_help() {
     echo "  - Linux (RHEL, CentOS, Fedora, Ubuntu, etc.)"
     echo "  - Solaris 10/11 SPARC"
     echo ""
+    echo "  SELF-CONTAINED MODE:"
+    echo "  ─────────────────────"
+    echo "  Place these files in ./tools/ folder for air-gapped use:"
+    echo "  - sshpass (for password authentication)"
+    echo "  - expect  (alternative for password auth)"
+    echo ""
     echo "  REQUIREMENTS:"
     echo "  ──────────────"
     echo "  - SSH access to target systems"
     echo "  - User account with sudo privileges (for hardware info)"
-    echo "  - sshpass (optional - for automated password input)"
-    echo "    If sshpass not available, uses SSH key authentication"
-    echo ""
-    echo "  NO DEPENDENCIES NEEDED:"
-    echo "  ────────────────────────"
-    echo "  This Bash version uses only built-in Linux/Solaris tools:"
-    echo "  bash, ssh, awk, grep, sed - all pre-installed!"
     echo ""
     echo "  GITHUB: https://github.com/IICarrionII/Axis"
     echo ""
@@ -166,8 +215,8 @@ show_about() {
     echo ""
     echo "  FEATURES:"
     echo "  ──────────"
-    echo "  - Zero dependencies - uses only built-in tools"
-    echo "  - Runs on Linux and Solaris"
+    echo "  - Self-contained - bundle tools in ./tools/ folder"
+    echo "  - Runs on Linux, Solaris, and macOS"
     echo "  - Scans Linux and Solaris SPARC targets"
     echo "  - Auto-accepts SSH host keys (air-gapped safe)"
     echo "  - Menu-driven interface"
@@ -183,11 +232,6 @@ show_about() {
 #===============================================================================
 # UTILITY FUNCTIONS
 #===============================================================================
-
-# Check if sshpass is available
-has_sshpass() {
-    command -v sshpass &> /dev/null
-}
 
 # Generate IP range from CIDR
 generate_ip_range() {
@@ -224,28 +268,64 @@ test_port() {
     local port="$2"
     local timeout_val="${3:-2}"
     
+    # Try nc first (most reliable cross-platform)
+    if command -v nc &> /dev/null; then
+        nc -z -w "$timeout_val" "$ip" "$port" &> /dev/null
+        return $?
+    fi
+    
     # Try timeout + bash /dev/tcp
     if command -v timeout &> /dev/null; then
         timeout "$timeout_val" bash -c "echo >/dev/tcp/$ip/$port" 2>/dev/null
         return $?
     fi
     
-    # Fallback to nc if available
-    if command -v nc &> /dev/null; then
-        nc -z -w "$timeout_val" "$ip" "$port" &> /dev/null
-        return $?
-    fi
-    
-    # Last resort - direct bash (may hang)
-    (echo >/dev/tcp/"$ip"/"$port") 2>/dev/null &
+    # macOS - use native bash with background process
+    (echo >/dev/tcp/"$ip"/"$port") &>/dev/null &
     local pid=$!
-    sleep "$timeout_val"
+    
+    # Wait for connection or timeout
+    local count=0
+    while kill -0 "$pid" 2>/dev/null && (( count < timeout_val * 10 )); do
+        sleep 0.1
+        ((count++))
+    done
+    
     if kill -0 "$pid" 2>/dev/null; then
         kill "$pid" 2>/dev/null
+        wait "$pid" 2>/dev/null
         return 1
     fi
+    
     wait "$pid" 2>/dev/null
     return $?
+}
+
+# Execute SSH command with expect
+ssh_with_expect() {
+    local ip="$1"
+    local user="$2"
+    local pass="$3"
+    local cmd="$4"
+    local ssh_timeout="${5:-$TIMEOUT}"
+    
+    "$EXPECT_CMD" -c "
+        log_user 0
+        set timeout $ssh_timeout
+        spawn $SSH_CMD -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=$ssh_timeout $user@$ip \"$cmd\"
+        expect {
+            -re \".*assword.*\" {
+                send \"$pass\r\"
+                log_user 1
+                expect {
+                    -re \".*assword.*\" { exit 1 }
+                    eof { catch wait result; exit [lindex \$result 3] }
+                }
+            }
+            eof { catch wait result; exit [lindex \$result 3] }
+            timeout { exit 1 }
+        }
+    " 2>/dev/null
 }
 
 # Execute SSH command
@@ -256,14 +336,22 @@ ssh_command() {
     local cmd="$4"
     local ssh_timeout="${5:-$TIMEOUT}"
     
-    local ssh_opts="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=$ssh_timeout -o BatchMode=yes"
+    local ssh_opts="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=$ssh_timeout"
     
+    # Try sshpass first (best option)
     if has_sshpass && [[ -n "$pass" ]]; then
-        sshpass -p "$pass" ssh $ssh_opts "$user@$ip" "$cmd" 2>/dev/null
-    else
-        # Without sshpass, try key-based auth
-        ssh $ssh_opts "$user@$ip" "$cmd" 2>/dev/null
+        "$SSHPASS_CMD" -p "$pass" "$SSH_CMD" $ssh_opts "$user@$ip" "$cmd" 2>/dev/null
+        return $?
     fi
+    
+    # Try expect second
+    if has_expect && [[ -n "$pass" ]]; then
+        ssh_with_expect "$ip" "$user" "$pass" "$cmd" "$ssh_timeout"
+        return $?
+    fi
+    
+    # Last resort - key-based auth only
+    "$SSH_CMD" $ssh_opts -o BatchMode=yes "$user@$ip" "$cmd" 2>/dev/null
 }
 
 # Detect remote OS type
@@ -273,11 +361,12 @@ detect_remote_os() {
     local pass="$3"
     
     local uname_result
-    uname_result=$(ssh_command "$ip" "$user" "$pass" "uname -s" 5)
+    uname_result=$(ssh_command "$ip" "$user" "$pass" "uname -s" 10)
     
     case "$uname_result" in
         *SunOS*) echo "Solaris" ;;
         *Linux*) echo "Linux" ;;
+        *Darwin*) echo "macOS" ;;
         *) echo "Unknown" ;;
     esac
 }
@@ -298,10 +387,15 @@ VIRTUAL=$(systemd-detect-virt 2>/dev/null | grep -qv none && echo "Yes" || echo 
 MANUFACTURER=$(sudo dmidecode -s system-manufacturer 2>/dev/null || echo "Unknown")
 MODEL=$(sudo dmidecode -s system-product-name 2>/dev/null || echo "Unknown")
 SERIAL=$(sudo dmidecode -s system-serial-number 2>/dev/null || echo "Unknown")
-OS=$(source /etc/os-release 2>/dev/null && echo "$PRETTY_NAME" || uname -sr)
+if [[ -f /etc/os-release ]]; then
+    source /etc/os-release 2>/dev/null
+    OS="$PRETTY_NAME"
+else
+    OS=$(uname -sr)
+fi
 KERNEL=$(uname -r)
 MEMORY=$(free -h 2>/dev/null | awk "/^Mem:/ {print \$2}" || echo "Unknown")
-MEMTYPE=$(sudo dmidecode -t memory 2>/dev/null | grep "Type:" | grep -v "Error" | head -1 | awk "{print \$2}" || echo "Unknown")
+MEMTYPE=$(sudo dmidecode -t memory 2>/dev/null | grep "Type:" | grep -v "Error" | grep -v "Unknown" | head -1 | awk "{print \$2}" || echo "Unknown")
 FIRMWARE=$(sudo dmidecode -s bios-version 2>/dev/null || echo "Unknown")
 echo "${HOSTNAME}|${VIRTUAL}|${MANUFACTURER}|${MODEL}|${SERIAL}|${OS}|${KERNEL}|${MEMORY}|${MEMTYPE}|${FIRMWARE}"
 '
@@ -309,12 +403,19 @@ echo "${HOSTNAME}|${VIRTUAL}|${MANUFACTURER}|${MODEL}|${SERIAL}|${OS}|${KERNEL}|
     local output
     output=$(ssh_command "$ip" "$user" "$pass" "$cmd" "$TIMEOUT")
     
-    if [[ -z "$output" ]]; then
+    if [[ -z "$output" || "$output" == *"Permission denied"* || "$output" == *"Connection refused"* ]]; then
         echo "Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Linux|Failed: Connection failed"
         return 1
     fi
     
-    # Clean and return
+    # Clean output - remove any warning lines
+    output=$(echo "$output" | grep '|' | tail -1)
+    
+    if [[ -z "$output" ]]; then
+        echo "Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Linux|Failed: No data returned"
+        return 1
+    fi
+    
     echo "$output|Linux|Success"
 }
 
@@ -346,8 +447,43 @@ echo "${HOSTNAME}|${VIRTUAL}|${MANUFACTURER}|${MODEL}|${SERIAL}|${OS}|${KERNEL}|
         return 1
     fi
     
-    # Clean and return
+    # Clean output
+    output=$(echo "$output" | grep '|' | tail -1)
+    
     echo "$output|Solaris|Success"
+}
+
+# Collect macOS system info (for testing)
+collect_macos_info() {
+    local ip="$1"
+    local user="$2"
+    local pass="$3"
+    
+    local cmd='
+HOSTNAME=$(hostname 2>/dev/null || echo "Unknown")
+VIRTUAL=$(system_profiler SPHardwareDataType 2>/dev/null | grep -q "Virtual" && echo "Yes" || echo "No")
+MANUFACTURER="Apple Inc."
+MODEL=$(system_profiler SPHardwareDataType 2>/dev/null | grep "Model Name" | cut -d":" -f2 | xargs || echo "Unknown")
+SERIAL=$(system_profiler SPHardwareDataType 2>/dev/null | grep "Serial Number" | cut -d":" -f2 | xargs || echo "Unknown")
+OS=$(sw_vers -productName 2>/dev/null) 
+OS="$OS $(sw_vers -productVersion 2>/dev/null)"
+KERNEL=$(uname -r)
+MEMORY=$(system_profiler SPHardwareDataType 2>/dev/null | grep "Memory:" | cut -d":" -f2 | xargs || echo "Unknown")
+MEMTYPE="Unknown"
+FIRMWARE=$(system_profiler SPHardwareDataType 2>/dev/null | grep "Boot ROM" | cut -d":" -f2 | xargs || echo "Unknown")
+echo "${HOSTNAME}|${VIRTUAL}|${MANUFACTURER}|${MODEL}|${SERIAL}|${OS}|${KERNEL}|${MEMORY}|${MEMTYPE}|${FIRMWARE}"
+'
+    
+    local output
+    output=$(ssh_command "$ip" "$user" "$pass" "$cmd" "$TIMEOUT")
+    
+    if [[ -z "$output" ]]; then
+        echo "Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|Unknown|macOS|Failed: Connection failed"
+        return 1
+    fi
+    
+    output=$(echo "$output" | grep '|' | tail -1)
+    echo "$output|macOS|Success"
 }
 
 #===============================================================================
@@ -370,12 +506,12 @@ get_required_settings() {
     if [[ -z "$PASSWORD" ]]; then
         echo ""
         echo "  Password is required."
-        read -sp "  Enter password: " PASSWORD
+        read -s -p "  Enter password: " PASSWORD
         echo ""
     fi
     
     if [[ -z "$OUTPUT_FILE" ]]; then
-        OUTPUT_FILE="./AXIS_Inventory_$(date +%Y%m%d_%H%M%S).csv"
+        OUTPUT_FILE="$SCRIPT_DIR/AXIS_Inventory_$(date +%Y%m%d_%H%M%S).csv"
     fi
     
     # Validate
@@ -394,10 +530,34 @@ test_single_host() {
     
     read -p "  Enter IP address to test: " test_ip
     
-    [[ -z "$USERNAME" ]] && read -p "  Enter username: " USERNAME
-    [[ -z "$PASSWORD" ]] && { read -sp "  Enter password: " PASSWORD; echo ""; }
+    # Always ask for username if not set
+    if [[ -z "$USERNAME" ]]; then
+        read -p "  Enter username: " USERNAME
+    else
+        echo "  Using username: $USERNAME"
+    fi
+    
+    # Always ask for password if not set
+    if [[ -z "$PASSWORD" ]]; then
+        read -s -p "  Enter password: " PASSWORD
+        echo ""
+    else
+        echo "  Using saved password: ********"
+    fi
     
     echo ""
+    
+    # Show auth method being used
+    echo "  Authentication method:"
+    if has_sshpass; then
+        echo "    -> sshpass: $SSHPASS_CMD"
+    elif has_expect; then
+        echo "    -> expect: $EXPECT_CMD"
+    else
+        echo "    -> SSH keys only (no password auth available)"
+    fi
+    echo ""
+    
     echo "  Testing connection to $test_ip..."
     echo ""
     
@@ -420,14 +580,17 @@ test_single_host() {
         if [[ "$test_result" == *"CONNECTION_SUCCESS"* ]]; then
             echo "SUCCESS"
             echo ""
-            echo "  Hostname: $(echo "$test_result" | tail -1)"
+            echo "  Hostname: $(echo "$test_result" | grep -v CONNECTION_SUCCESS | tail -1)"
         else
             echo "FAILED"
-            if ! has_sshpass; then
-                echo ""
-                echo "  Note: sshpass not installed. Using key-based auth only."
-                echo "  Password auth requires sshpass or SSH keys."
+            echo ""
+            echo "  Possible causes:"
+            echo "  - Wrong username or password"
+            if ! has_sshpass && ! has_expect; then
+                echo "  - No password auth tool (sshpass/expect) available"
             fi
+            echo "  - SSH key not set up for this user"
+            echo "  - User not allowed to SSH to this host"
         fi
     else
         echo "SKIPPED (port closed)"
@@ -450,8 +613,24 @@ test_single_host() {
 view_current_settings() {
     show_banner
     
-    local sshpass_status="Not Available"
-    has_sshpass && sshpass_status="Available"
+    local sshpass_status="Not Found"
+    local expect_status="Not Found"
+    local ssh_status="Not Found"
+    local auth_method="None (SSH Keys Only)"
+    
+    if has_sshpass; then
+        sshpass_status="$SSHPASS_CMD"
+        auth_method="sshpass"
+    fi
+    
+    if has_expect; then
+        expect_status="$EXPECT_CMD"
+        [[ "$auth_method" == "None (SSH Keys Only)" ]] && auth_method="expect"
+    fi
+    
+    if has_ssh; then
+        ssh_status="$SSH_CMD"
+    fi
     
     echo "  ┌─────────────────────────────────────────────────────────────┐"
     echo "  │                  CURRENT SETTINGS                           │"
@@ -463,15 +642,26 @@ view_current_settings() {
     printf "  │  Output File:   %-43s│\n" "${OUTPUT_FILE:-Auto-generate}"
     printf "  │  Timeout:       %-43s│\n" "${TIMEOUT} seconds"
     echo "  │                                                             │"
-    printf "  │  SSH Tool:      %-43s│\n" "ssh (native)"
+    echo "  ├─────────────────────────────────────────────────────────────┤"
+    echo "  │                  DETECTED TOOLS                             │"
+    echo "  ├─────────────────────────────────────────────────────────────┤"
+    echo "  │                                                             │"
+    printf "  │  SSH:           %-43s│\n" "$ssh_status"
     printf "  │  sshpass:       %-43s│\n" "$sshpass_status"
+    printf "  │  expect:        %-43s│\n" "$expect_status"
+    echo "  │                                                             │"
+    printf "  │  Auth Method:   %-43s│\n" "$auth_method"
     echo "  │                                                             │"
     echo "  └─────────────────────────────────────────────────────────────┘"
     echo ""
     
-    if ! has_sshpass; then
-        echo "  Note: sshpass not installed. Password authentication requires"
-        echo "  either sshpass or SSH key-based authentication."
+    if ! has_sshpass && ! has_expect; then
+        echo "  WARNING: No password authentication tools found!"
+        echo ""
+        echo "  To enable password auth, either:"
+        echo "  1. Install sshpass: sudo yum install sshpass"
+        echo "  2. Copy sshpass binary to: $SCRIPT_DIR/tools/"
+        echo "  3. Use SSH key-based authentication instead"
         echo ""
     fi
     
@@ -496,6 +686,16 @@ start_scan() {
     echo "  Subnet:   $SUBNET"
     echo "  Username: $USERNAME"
     echo "  Output:   $OUTPUT_FILE"
+    echo ""
+    
+    # Show auth method
+    if has_sshpass; then
+        echo "  Auth:     sshpass (password)"
+    elif has_expect; then
+        echo "  Auth:     expect (password)"
+    else
+        echo "  Auth:     SSH keys only"
+    fi
     echo ""
     
     read -p "  Proceed with scan? (Y/N): " confirm
@@ -527,7 +727,7 @@ start_scan() {
         # Progress update every 10 IPs
         if (( count % 10 == 0 )) || (( count == total_ips )); then
             local pct=$((count * 100 / total_ips))
-            echo -ne "\r  Scanning: $count/$total_ips ($pct%)   "
+            printf "\r  Scanning: %d/%d (%d%%)   " "$count" "$total_ips" "$pct"
         fi
         
         if test_port "$ip" 22 1; then
@@ -579,6 +779,9 @@ start_scan() {
                 ;;
             "Solaris")
                 result=$(collect_solaris_info "$ip" "$USERNAME" "$PASSWORD")
+                ;;
+            "macOS")
+                result=$(collect_macos_info "$ip" "$USERNAME" "$PASSWORD")
                 ;;
             *)
                 result=$(collect_linux_info "$ip" "$USERNAME" "$PASSWORD")
@@ -642,7 +845,7 @@ configure_settings() {
                 read -p "  Enter username: " USERNAME
                 ;;
             3)
-                read -sp "  Enter password: " PASSWORD
+                read -s -p "  Enter password: " PASSWORD
                 echo ""
                 ;;
             4)
@@ -667,6 +870,9 @@ configure_settings() {
 #===============================================================================
 
 main() {
+    # Initialize tools on startup
+    init_tools
+    
     while true; do
         show_main_menu
         read -p "  Enter your choice: " choice

@@ -7,9 +7,14 @@
 
 A cross-platform, menu-driven hardware and software inventory scanner designed for air-gapped enterprise networks. AXIS collects detailed system information from Linux, Solaris SPARC, and Windows systems without requiring internet connectivity.
 
-**Two versions available:**
-- **`Axis.ps1`** - PowerShell version (Windows, or Linux/Solaris with PowerShell)
-- **`Axis.sh`** - Pure Bash version (Linux/Solaris - **ZERO dependencies**)
+## Two Versions - Choose Based on Your Needs
+
+| Scanner | Run FROM | Scans TO | Best For |
+|---------|----------|----------|----------|
+| **`Axis.ps1`** | Windows 10/11 | Linux, Solaris, **Windows** | **Primary scanner** - scans ALL platforms |
+| **`Axis.sh`** | Linux/Solaris | Linux, Solaris | Backup scanner when Windows unavailable |
+
+**Recommendation:** Use `Axis.ps1` from your Windows workstation as your primary scanner - it can scan all three platforms (Linux, Solaris, and Windows).
 
 ```
      ___   ___  __ ____  _____
@@ -47,54 +52,50 @@ A cross-platform, menu-driven hardware and software inventory scanner designed f
 
 ## 🚀 Quick Start
 
-### On Windows (PowerShell version)
+### Primary: Windows (Scans ALL Platforms)
 
-1. Download `Axis.ps1` and `plink.exe` to the same folder
-2. Open PowerShell and navigate to the folder
-3. Run: `.\Axis.ps1`
-4. Select option `[1]` for Quick Scan
-5. Enter subnet, username, and password when prompted
+1. Download and extract AXIS to a folder (e.g., `C:\Tools\Axis\`)
+2. Download `plink.exe` from [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html) and place in same folder
+3. Rename `Axis.ps1.txt` to `Axis.ps1` (if needed)
+4. Open PowerShell and run:
+   ```powershell
+   cd C:\Tools\Axis
+   .\Axis.ps1
+   ```
+5. Select `[1] Quick Scan (All Platforms)`
+6. Enter subnet, username, and password when prompted
 
-### On Linux/Solaris (Bash version - RECOMMENDED)
-
-**No installation required!** The Bash version uses only built-in tools.
+### Backup: Linux/Solaris (Scans Linux & Solaris Only)
 
 ```bash
-# Make executable
+# Make executable and run
 chmod +x Axis.sh
-
-# Run AXIS
 ./Axis.sh
 ```
 
-That's it! No PowerShell, no sshpass, no dependencies needed.
-
-### On Linux (PowerShell version - alternative)
-
-```bash
-# Only if you prefer PowerShell and have it installed
-pwsh ./Axis.ps1
-```
+**Note:** For password authentication on Linux, place `sshpass` in the `./tools/` folder or install it system-wide.
 
 ## 📦 Requirements
 
-### Bash Version (`Axis.sh`) - Linux/Solaris
-
-| Requirement | Notes |
-|-------------|-------|
-| Bash 4.0+ | Pre-installed on all Linux/Solaris |
-| SSH client | Pre-installed (`ssh`) |
-| **That's it!** | No other dependencies! |
-
-**Optional:** `sshpass` for automated password input. Without it, AXIS uses SSH key authentication.
-
-### PowerShell Version (`Axis.ps1`) - Windows
+### Axis.ps1 (Windows) - PRIMARY SCANNER
 
 | Requirement | Notes |
 |-------------|-------|
 | Windows 10/11 or Server 2016+ | Required |
 | PowerShell 5.1+ | Built-in |
 | plink.exe | For SSH scanning - [Download from PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html) |
+
+**Scans:** Linux ✅ | Solaris ✅ | Windows ✅
+
+### Axis.sh (Linux/Solaris) - BACKUP SCANNER
+
+| Requirement | Notes |
+|-------------|-------|
+| Bash 4.0+ | Pre-installed on all Linux/Solaris |
+| SSH client | Pre-installed (`ssh`) |
+| sshpass (optional) | For password auth - place in `./tools/` folder |
+
+**Scans:** Linux ✅ | Solaris ✅ | Windows ❌
 
 ### Target Systems
 
@@ -150,17 +151,21 @@ Enable-PSRemoting -Force
 
 ```
 Axis/
-├── Axis.ps1              # PowerShell version (Windows)
-├── Axis.sh               # Bash version (Linux/Solaris) - NO DEPENDENCIES
-├── README.md             # This file
-├── LICENSE               # MIT License
-├── CHANGELOG.md          # Version history
+├── Axis.ps1              # PowerShell - PRIMARY (Windows → All platforms)
+├── Axis.sh               # Bash - BACKUP (Linux/Solaris → Linux/Solaris)
+├── plink.exe             # Place here for Windows scanning (download separately)
+├── tools/
+│   ├── README.txt        # Instructions for bundling tools
+│   └── sshpass           # Place here for Linux password auth (optional)
+├── README.md
+├── LICENSE
+├── CHANGELOG.md
 ├── docs/
-│   ├── INSTALL.md        # Detailed installation guide
-│   ├── USAGE.md          # Usage examples
-│   └── TROUBLESHOOTING.md # Common issues and solutions
+│   ├── INSTALL.md
+│   ├── USAGE.md
+│   └── TROUBLESHOOTING.md
 └── examples/
-    └── sample_output.csv # Example scan output
+    └── sample_output.csv
 ```
 
 ## 🔍 Example Output
