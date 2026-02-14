@@ -1,211 +1,242 @@
 # AXIS Usage Guide
 
-This guide covers how to use AXIS effectively for network inventory scanning.
-
-## Table of Contents
-
-1. [Starting AXIS](#starting-axis)
-2. [Quick Scan](#quick-scan)
-3. [Platform-Specific Scans](#platform-specific-scans)
-4. [Configuring Settings](#configuring-settings)
-5. [Testing Connections](#testing-connections)
-6. [Understanding Output](#understanding-output)
-7. [Advanced Usage](#advanced-usage)
-
----
-
 ## Starting AXIS
 
-### On Windows
-
 ```powershell
-# Navigate to AXIS folder
 cd C:\Tools\Axis
-
-# Run AXIS
 .\Axis.ps1
 ```
 
-### On Linux
-
-```bash
-# Navigate to AXIS folder
-cd ~/Axis
-
-# Run AXIS
-pwsh ./Axis.ps1
-```
-
-You'll see the main menu:
+## Main Menu Overview
 
 ```
-     ___   ___  __ ____  _____
-    /   |  \  \/ //  _/ / ___/
-   / /| |   \  /  / /   \__ \ 
-  / ___ |   / / _/ /   ___/ / 
- /_/  |_|  /_/ /___/  /____/  
+[1]  Scan Subnet (All Platforms)      - Scan entire subnet for all OS types
+[2]  Scan Single Host                 - Scan just one IP address
+[3]  Scan Subnet - Linux/Solaris Only - Skip Windows hosts
+[4]  Scan Subnet - Windows Only       - Skip Linux/Solaris hosts
 
-  ╔═══════════════════════════════════════════════════════════╗
-  ║   AXIS - Asset eXploration & Inventory Scanner            ║
-  ╚═══════════════════════════════════════════════════════════╝
+[5]  Manage Credentials               - Add/view/remove login credentials
+[6]  Configure Settings               - Set defaults (subnet, output, timeout)
+[7]  View Current Settings            - See current configuration
 
-  [1]  Quick Scan (All Platforms)
-  [2]  Scan Linux/Solaris Only
-  [3]  Scan Windows Only
-  ...
+[8]  Help / Instructions              - Built-in help
+[9]  About                            - Version and author info
+
+[0]  Exit                             - Quit AXIS
 ```
 
----
+## Managing Credentials
 
-## Quick Scan
+AXIS supports multiple credentials for environments with different admin accounts.
 
-The quickest way to scan your network:
+### Adding Credentials
 
-1. Press `1` to select "Quick Scan (All Platforms)"
-2. Enter your subnet in CIDR notation:
-   ```
-   Enter subnet (e.g., 192.168.1.0/24): 10.0.1.0/24
-   ```
-3. Enter username:
-   ```
-   Enter username: admin
-   ```
-4. Enter password:
-   ```
-   Enter password: yourpassword
-   ```
-5. Confirm to start:
-   ```
-   Proceed with scan? (Y/N): Y
-   ```
+1. Select `[5] Manage Credentials`
+2. Select `[1] Add Credential`
+3. Enter:
+   - **Label:** A name for this credential (e.g., "Linux Admin")
+   - **Username:** The login username
+   - **Password:** The login password
 
-AXIS will:
-- Generate list of all IPs in the subnet
-- Scan for SSH (port 22) and WinRM (port 5985) hosts
-- Detect OS type for each host
-- Collect hardware and software information
-- Export results to CSV
+### Example Setup
 
----
-
-## Platform-Specific Scans
-
-### Linux/Solaris Only (Option 2)
-
-Use when you only have Unix-like systems:
-- Scans only SSH hosts (port 22)
-- Auto-detects Linux vs Solaris
-- Faster if you have no Windows servers
-
-### Windows Only (Option 3)
-
-Use when you only have Windows systems:
-- Scans only WinRM hosts (port 5985)
-- Uses PowerShell remoting
-- Requires WinRM enabled on targets
-
-### Custom Scan (Option 4)
-
-Choose exactly what to scan:
-```
-Scan SSH hosts (Linux/Solaris)? (Y/N): Y
-Scan WinRM hosts (Windows)? (Y/N): N
-```
-
----
-
-## Configuring Settings
-
-Access settings with option `[5]`:
+For an environment with separate Linux and Windows admins:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                   SETTINGS                                  │
-├─────────────────────────────────────────────────────────────┤
-│   [1]  Set Subnet                                           │
-│   [2]  Set Username                                         │
-│   [3]  Set Password                                         │
-│   [4]  Set Output Path                                      │
-│   [5]  Set Timeout                                          │
-│   [6]  Set Thread Count                                     │
-│   [0]  Back to Main Menu                                    │
-└─────────────────────────────────────────────────────────────┘
+Credential 1:
+  Label:    Linux Admin
+  Username: linuxadmin
+  Password: ********
+
+Credential 2:
+  Label:    Windows Admin
+  Username: DOMAIN\winadmin
+  Password: ********
 ```
 
-### Settings Explained
+### How Multi-Credential Works
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| Subnet | Network range in CIDR notation | None (required) |
-| Username | Account for authentication | None (required) |
-| Password | Password for authentication | None (required) |
-| Output Path | Where to save CSV file | `.\AXIS_Inventory_TIMESTAMP.csv` |
-| Timeout | Seconds per command | 60 |
-| Thread Count | Concurrent operations | 10 |
+When scanning:
+1. AXIS tries the first credential
+2. If authentication fails, tries the second credential
+3. Continues until one works or all fail
+4. Each host uses whichever credential succeeds
 
-### Pre-Configuring Settings
+## Scanning a Single Host
 
-Configure all settings before scanning:
+Perfect for:
+- Testing connectivity before a full scan
+- Adding a new host to your inventory
+- Troubleshooting a specific system
 
-1. Press `5` for Settings
-2. Press `1` and enter subnet
-3. Press `2` and enter username
-4. Press `3` and enter password
-5. Press `0` to return to main menu
-6. Press `1` to start Quick Scan (won't ask again)
+### Steps
 
----
+1. Select `[2] Scan Single Host`
+2. Enter the IP address
+3. AXIS will:
+   - Check which ports are open (SSH/WMI)
+   - Detect the OS type
+   - Collect system information
+   - Display results on screen
+4. Optionally save to CSV
 
-## Testing Connections
-
-Before scanning 150+ hosts, test with one:
-
-1. Press `7` for "Test Connection to Single Host"
-2. Enter an IP address: `192.168.1.100`
-3. Enter username and password (if not set)
-4. Watch the results:
+### Example Output
 
 ```
-Testing connection to 192.168.1.100...
+Scanning 192.168.1.100...
 
-[1/3] Checking SSH port (22)... OPEN
-[2/3] Checking WinRM port (5985)... CLOSED
-[3/3] Testing authentication... SUCCESS
+Checking ports... SSH(22) WMI(135)
+Detecting OS via SSH... Linux
+Collecting system info...
 
-Output:
-  webserver01
+═══════════════════════════════════════════════════════════
+                       RESULTS
+═══════════════════════════════════════════════════════════
+
+Hostname:       webserver01
+IP Address:     192.168.1.100
+OS Type:        Linux
+OS/IOS:         Red Hat Enterprise Linux 8.9
+Manufacturer:   Dell Inc.
+Model:          PowerEdge R640
+Serial:         ABC1234XYZ
+Memory:         64Gi
+Virtual:        No
+Kernel:         4.18.0-513.el8.x86_64
+Firmware:       2.12.0
+Status:         Success
+
+Save to CSV? (Y/N):
 ```
 
-If test fails, check:
-- Network connectivity
-- Username/password
-- SSH/WinRM configuration on target
+## Scanning a Subnet
 
----
+### Steps
 
-## Understanding Output
+1. Select `[1] Scan Subnet (All Platforms)`
+2. Enter subnet in CIDR notation (e.g., `192.168.1.0/24`)
+3. Confirm the scan
+4. Wait for completion
+5. Results saved to CSV automatically
 
-### Console Output During Scan
+### Subnet Notation Examples
+
+| Notation | Range | Host Count |
+|----------|-------|------------|
+| 192.168.1.0/24 | 192.168.1.1 - 192.168.1.254 | 254 |
+| 192.168.1.0/25 | 192.168.1.1 - 192.168.1.126 | 126 |
+| 192.168.1.0/26 | 192.168.1.1 - 192.168.1.62 | 62 |
+| 10.0.0.0/16 | 10.0.0.1 - 10.0.255.254 | 65,534 |
+
+### Scan Process
+
+1. **Phase 1: Discovery**
+   - Checks port 22 (SSH) on each IP
+   - Checks port 135 (WMI) on each IP
+   - Builds list of reachable hosts
+
+2. **Phase 2: Collection**
+   - Detects OS type for each host
+   - Runs appropriate commands (Linux/Solaris/Windows)
+   - Collects hardware and software info
+   - Shows progress: `[15/50] 192.168.1.25 [Linux] OK webserver01`
+
+3. **Results**
+   - Saves CSV file
+   - Shows summary (success/fail counts)
+   - Option to open CSV
+
+### Example Scan Output
 
 ```
 Phase 1: Discovering hosts...
 SSH hosts found: 45
-WinRM hosts found: 12
+Windows hosts found: 12
 
 Phase 2: Collecting system information...
-[1/57] 192.168.1.10 [Linux] ✓ webserver01
-[2/57] 192.168.1.11 [Linux] ✓ webserver02
-[3/57] 192.168.1.20 [Solaris] ✓ dbserver01
-[4/57] 192.168.1.30 [Windows] ✓ DC01
-[5/57] 192.168.1.31 [Linux] ✗
+
+[1/57] 192.168.1.10 [Linux] OK webserver01
+[2/57] 192.168.1.11 [Linux] OK webserver02
+[3/57] 192.168.1.20 [Solaris] OK dbserver01
+[4/57] 192.168.1.21 [Windows] OK fileserver01
+...
+[57/57] 192.168.1.250 [Windows] OK dc02
+
+═══════════════════════════════════════════════════════════
+                       RESULTS
+═══════════════════════════════════════════════════════════
+
+Saved: .\AXIS_Inventory_20250107_143022.csv
+
+Total scanned:  57
+Successful:     54
+Failed:         3
+Scan time:      12.3 minutes
+
+By OS Type:
+  Linux: 35
+  Windows: 15
+  Solaris: 4
 ```
 
-- `✓` = Success (hostname shown)
-- `✗` = Failed (check CSV for error details)
+## Configuring Settings
 
-### CSV Output
+Select `[6] Configure Settings` to set:
 
-Results are saved to CSV with these columns:
+| Setting | Description |
+|---------|-------------|
+| Default Subnet | Pre-fill subnet for scans |
+| Output Path | Where to save CSV files |
+| Timeout | Seconds to wait per host (default: 60) |
+
+## Viewing Settings
+
+Select `[7] View Current Settings` to see:
+- Current subnet
+- Output path
+- Timeout value
+- Number of stored credentials
+- plink.exe location
+
+## Platform-Specific Scanning
+
+### Linux/Solaris Only (Option 3)
+
+Use when:
+- Your subnet has no Windows hosts
+- Windows WMI is blocked by firewall
+- You only need Unix/Linux data
+
+### Windows Only (Option 4)
+
+Use when:
+- Your subnet has no Linux/Solaris hosts
+- SSH is not available
+- You only need Windows data
+
+## Tips for Large Environments
+
+### For 100+ Hosts
+
+1. **Set a longer timeout:** Default 60 seconds may not be enough for slow hosts
+2. **Scan in segments:** Break large subnets into /25 or /26 chunks
+3. **Run during off-hours:** Network traffic affects scan speed
+4. **Check credentials first:** Test on a few hosts before full scan
+
+### For Air-Gapped Networks
+
+1. **Pre-cache host keys:** First scan will prompt for each new host
+2. **Multiple credentials:** Add all admin accounts before scanning
+3. **Save output locally:** Ensure output path is accessible
+
+## Output Files
+
+### File Naming
+
+- Subnet scans: `AXIS_Inventory_YYYYMMDD_HHMMSS.csv`
+- Single host: `AXIS_SingleHost_IP_ADDRESS_YYYYMMDD_HHMMSS.csv`
+
+### CSV Columns
 
 | Column | Description |
 |--------|-------------|
@@ -215,90 +246,37 @@ Results are saved to CSV with these columns:
 | Virtual Asset | Yes/No |
 | Manufacturer | Hardware vendor |
 | Model Number | Hardware model |
-| Serial Number | Hardware serial |
+| Serial Number | System serial |
 | OS/IOS | Operating system |
-| FW Version | Firmware/BIOS |
+| FW Version | BIOS/Firmware |
 | Memory Size | Total RAM |
-| Memory Type | DDR4, etc. |
-| Kernel Version | OS kernel |
+| Memory Type | RAM type |
+| Kernel Version | OS kernel/build |
 | OS Type | Linux/Solaris/Windows |
-| Scan Status | Success or failure reason |
+| Scan Status | Success or error message |
 
-### Results Summary
+## Common Workflows
 
-After scan completes:
+### Weekly Inventory Update
 
-```
-═══════════════════════════════════════════════════════════
-                       RESULTS
-═══════════════════════════════════════════════════════════
+1. Run AXIS
+2. Select `[1] Scan Subnet (All Platforms)`
+3. Enter your subnet
+4. Wait for completion
+5. Open CSV and compare with previous week
 
-✓ Saved: .\AXIS_Inventory_20241219_143022.csv
+### Adding a New Host
 
-Total scanned:  57
-Successful:     54
-Failed:         3
-Scan time:      12.5 minutes
+1. Run AXIS
+2. Select `[2] Scan Single Host`
+3. Enter the new host's IP
+4. Save to CSV
+5. Append to master inventory
 
-By OS Type:
-  Linux: 42
-  Windows: 10
-  Solaris: 2
+### Troubleshooting a Host
 
-Virtual:  38
-Physical: 16
-```
-
----
-
-## Advanced Usage
-
-### Scanning Multiple Subnets
-
-Run AXIS multiple times with different subnets:
-
-```powershell
-# Scan first subnet
-.\Axis.ps1
-# Configure: 10.0.1.0/24, run scan
-
-# Scan second subnet
-.\Axis.ps1
-# Configure: 10.0.2.0/24, run scan
-
-# Combine CSVs in Excel
-```
-
-### Scanning Single IP
-
-Use /32 CIDR notation:
-```
-Enter subnet: 192.168.1.100/32
-```
-
-### Adjusting for Slow Networks
-
-Increase timeout for slow or congested networks:
-
-1. Go to Settings (option 5)
-2. Set Timeout (option 5): `120` seconds
-3. Run scan
-
-### Reducing Network Load
-
-Decrease thread count:
-
-1. Go to Settings (option 5)
-2. Set Thread Count (option 6): `5` threads
-3. Run scan
-
----
-
-## Tips and Best Practices
-
-1. **Always test first**: Use option 7 before full scans
-2. **Start small**: Test with a /28 or /27 before scanning /24
-3. **Off-peak scanning**: Run during maintenance windows
-4. **Save settings**: Configure all settings before scanning
-5. **Check failures**: Review CSV for failed hosts and errors
-6. **Passwordless sudo**: Configure for complete hardware info
+1. Run AXIS
+2. Select `[2] Scan Single Host`
+3. Enter the problem host's IP
+4. Review on-screen results
+5. Check "Scan Status" for errors

@@ -1,366 +1,281 @@
 # AXIS Troubleshooting Guide
 
-This guide helps resolve common issues with AXIS.
-
-## Table of Contents
-
-1. [Installation Issues](#installation-issues)
-2. [Connection Issues](#connection-issues)
-3. [Authentication Issues](#authentication-issues)
-4. [Data Collection Issues](#data-collection-issues)
-5. [Performance Issues](#performance-issues)
-6. [Platform-Specific Issues](#platform-specific-issues)
-
----
-
 ## Installation Issues
 
-### plink.exe not found (Windows)
+### "plink.exe not found"
 
-**Symptom:**
-```
-WARNING: plink.exe not found!
-SSH scanning (Linux/Solaris) will not work.
-```
+**Cause:** plink.exe is not in the same folder as Axis.ps1
 
 **Solution:**
-1. Download plink.exe from [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html)
-2. Place in same folder as Axis.ps1
-3. Restart AXIS
+1. Download plink.exe from https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html
+2. Place it in the same folder as Axis.ps1
+3. Verify the filename is exactly `plink.exe`
 
-**Verification:**
+### "Running scripts is disabled on this system"
+
+**Cause:** PowerShell execution policy is restricted
+
+**Solutions:**
+
 ```powershell
-# In the Axis folder
-dir plink.exe
+# Option 1: Run with bypass (recommended for one-time use)
+powershell -ExecutionPolicy Bypass -File .\Axis.ps1
+
+# Option 2: Change policy for current user
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Option 3: Change policy for current session
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
 ```
 
-### sshpass not found (Linux)
+### Script opens and immediately closes
 
-**Symptom:**
-```
-WARNING: sshpass not found!
-Password authentication may not work.
-```
+**Cause:** Usually an error before the menu loads
 
 **Solution:**
-```bash
-# RHEL/CentOS
-sudo dnf install -y sshpass
+1. Open PowerShell manually (don't double-click the script)
+2. Navigate to the Axis folder: `cd C:\Tools\Axis`
+3. Run: `.\Axis.ps1`
+4. Read any error messages
 
-# Ubuntu/Debian
-sudo apt install -y sshpass
-```
+## SSH/Linux/Solaris Issues
 
-### PowerShell not found (Linux)
+### "Host key not cached" prompt keeps appearing
 
-**Symptom:**
-```
-pwsh: command not found
-```
+**Cause:** Each new host requires accepting its SSH key
 
 **Solution:**
-```bash
-# RHEL 8/9
-curl https://packages.microsoft.com/config/rhel/8/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
-sudo dnf install -y powershell
-```
+- Type `y` and press Enter when prompted
+- This only happens once per host
+- Keys are cached in PuTTY's registry
 
----
+### SSH connection times out
 
-## Connection Issues
+**Causes:**
+- Host is unreachable
+- SSH service not running
+- Firewall blocking port 22
+- Slow network
 
-### Port 22 Closed
+**Solutions:**
+1. Verify SSH is running on target: `systemctl status sshd`
+2. Check firewall: `firewall-cmd --list-ports`
+3. Test connectivity: `ping <ip-address>`
+4. Increase timeout in Settings (default 60 seconds)
 
-**Symptom:**
-```
-[1/3] Checking SSH port (22)... CLOSED
-```
+### Authentication failure on Linux
 
-**Causes & Solutions:**
+**Causes:**
+- Wrong username or password
+- User not allowed to SSH
+- SSH config restricts access
 
-1. **SSH not running on target:**
-   ```bash
-   # On target system
-   sudo systemctl status sshd
-   sudo systemctl start sshd
-   sudo systemctl enable sshd
-   ```
+**Solutions:**
+1. Test credentials manually: `ssh user@ip-address`
+2. Check /etc/ssh/sshd_config for AllowUsers/DenyUsers
+3. Verify the user exists on the target system
+4. Add the correct credential in AXIS
 
-2. **Firewall blocking:**
-   ```bash
-   # RHEL/CentOS
-   sudo firewall-cmd --add-service=ssh --permanent
-   sudo firewall-cmd --reload
-   ```
+### Linux scan returns "Unknown" for most fields
 
-3. **Network issue:**
+**Causes:**
+- User doesn't have sudo access
+- dmidecode not installed
+- Running on a container (no hardware access)
+
+**Solutions:**
+1. Ensure user has passwordless sudo for dmidecode
+2. Install dmidecode: `yum install dmidecode`
+3. For containers, hardware info won't be available
+
+### Solaris scan returns "Unknown" for most fields
+
+**Causes:**
+- User doesn't have access to system commands
+- Commands have different paths on this Solaris version
+
+**Solutions:**
+1. Verify user can run: `hostname`, `/usr/sbin/prtconf`, `/usr/bin/hostid`
+2. Check if sudo is needed for prtconf
+3. Test commands manually on the Solaris box
+
+## Windows Issues
+
+### "Access is denied" or WMI connection failed
+
+**Causes:**
+- Wrong credentials
+- WMI not enabled
+- Firewall blocking port 135
+- User not admin on target
+
+**Solutions:**
+
+1. **Verify credentials** - Test with:
    ```powershell
-   # Test connectivity
-   Test-NetConnection -ComputerName 192.168.1.100 -Port 22
+   $cred = Get-Credential
+   Get-WmiObject -Class Win32_ComputerSystem -ComputerName TARGET_IP -Credential $cred
    ```
 
-### Port 5985 Closed (Windows)
+2. **Enable WMI through firewall:**
+   ```cmd
+   netsh advfirewall firewall set rule group="Windows Management Instrumentation (WMI)" new enable=yes
+   ```
 
-**Symptom:**
-```
-[2/3] Checking WinRM port (5985)... CLOSED
-```
+3. **Check remote WMI service:**
+   ```cmd
+   sc \\TARGET_IP query winmgmt
+   ```
 
-**Solution on Windows target:**
-```powershell
-# Run as Administrator
-Enable-PSRemoting -Force
-Set-Item WSMan:\localhost\Client\TrustedHosts -Value "*" -Force
-```
+4. **Use domain admin** for domain-joined systems:
+   ```
+   Username: DOMAIN\administrator
+   ```
 
-### Connection Timeout
+### "RPC server is unavailable"
 
-**Symptom:**
-```
-[3/3] Testing authentication... FAILED
-Error: Timeout
-```
+**Causes:**
+- Target is offline
+- Port 135 blocked
+- RPC service not running
 
 **Solutions:**
+1. Ping the target to verify connectivity
+2. Check port: `Test-NetConnection -ComputerName TARGET_IP -Port 135`
+3. On target, verify RPC service: `services.msc` → "Remote Procedure Call (RPC)"
 
-1. **Increase timeout:**
-   - Settings → Set Timeout → 90 or 120 seconds
+### Windows scan shows wrong data
 
-2. **Check network latency:**
+**Cause:** WMI query returned unexpected results
+
+**Solution:**
+1. Test WMI directly on target:
    ```powershell
-   ping 192.168.1.100
+   Get-WmiObject -Class Win32_ComputerSystem
+   Get-WmiObject -Class Win32_OperatingSystem
+   Get-WmiObject -Class Win32_BIOS
    ```
+2. Report issue if data differs from AXIS output
 
-3. **Check for slow DNS:**
-   - Try using IP address instead of hostname
+## Credential Issues
 
----
+### "All credentials failed"
 
-## Authentication Issues
-
-### Permission Denied (SSH)
-
-**Symptom:**
-```
-Error: Permission denied
-```
+**Causes:**
+- No credentials stored
+- All stored credentials are wrong
+- Different credentials needed for different hosts
 
 **Solutions:**
+1. Go to `[5] Manage Credentials`
+2. Verify credentials are correct
+3. Add additional credentials for different systems
+4. Test with single host scan first
 
-1. **Verify credentials:**
-   ```bash
-   # Manual test
-   ssh username@192.168.1.100
+### How to handle multiple credential sets
+
+1. Add all credential sets you use:
+   - Linux admin account
+   - Windows admin account
+   - Solaris root account
+   - Domain admin account
+
+2. AXIS will try each one automatically
+
+3. Label them clearly:
+   ```
+   [1] Linux Admin - linuxadmin
+   [2] Windows Admin - DOMAIN\winadmin
+   [3] Solaris Root - root
    ```
 
-2. **Check SSH configuration:**
-   ```bash
-   # On target
-   sudo grep PasswordAuthentication /etc/ssh/sshd_config
-   # Should be: PasswordAuthentication yes
-   
-   # If not, edit and restart
-   sudo vi /etc/ssh/sshd_config
-   sudo systemctl restart sshd
-   ```
+## Network Issues
 
-3. **Check user exists:**
-   ```bash
-   # On target
-   id username
-   ```
+### Scan is very slow
 
-### Access Denied (Windows)
-
-**Symptom:**
-```
-Failed: Access is denied
-```
+**Causes:**
+- Large subnet
+- Many unreachable IPs (timeout on each)
+- Slow network
 
 **Solutions:**
+1. Scan smaller subnets (/25, /26)
+2. Reduce timeout if hosts respond quickly
+3. Scan during off-hours
+4. Use platform-specific scans (Linux-only or Windows-only)
 
-1. **Try different username formats:**
-   - `username`
-   - `DOMAIN\username`
-   - `username@domain.local`
+### Some hosts not discovered
 
-2. **Check account permissions:**
-   - User must be local admin or domain admin
-
-3. **Check WinRM settings:**
-   ```powershell
-   # On target
-   winrm get winrm/config/service/auth
-   ```
-
-4. **Add to TrustedHosts (on scanning system):**
-   ```powershell
-   Set-Item WSMan:\localhost\Client\TrustedHosts -Value "*" -Force
-   ```
-
----
-
-## Data Collection Issues
-
-### Hardware Info Shows "Unknown"
-
-**Symptom:**
-```csv
-"Manufacturer","Model Number","Serial Number"
-"Unknown","Unknown","Unknown"
-```
-
-**Cause:** User lacks sudo access for dmidecode
-
-**Solution (Linux):**
-```bash
-# On each target
-echo "username ALL=(ALL) NOPASSWD: /usr/sbin/dmidecode" | sudo tee /etc/sudoers.d/axis
-sudo chmod 440 /etc/sudoers.d/axis
-```
-
-**Solution (Solaris):**
-```bash
-echo "username ALL=(ALL) NOPASSWD: /usr/sbin/prtconf, /usr/sbin/prtdiag, /usr/sbin/sneep" | sudo tee /etc/sudoers.d/axis
-```
-
-### Virtual Asset Always "Unknown"
-
-**Cause:** systemd-detect-virt not available
-
-**For RHEL/CentOS:**
-```bash
-sudo dnf install -y systemd
-```
-
-**For Solaris:**
-- Uses virtinfo command
-- May show Unknown on physical systems without virtinfo
-
-### Memory Type Unknown
-
-**Cause:** dmidecode memory type not readable
-
-**This is normal for:**
-- Virtual machines
-- Some older hardware
-- Systems without SMBIOS support
-
----
-
-## Performance Issues
-
-### Scan is Very Slow
+**Causes:**
+- Hosts are offline
+- SSH/WMI ports are closed
+- Firewall blocking discovery
 
 **Solutions:**
+1. Verify hosts are online: `ping <ip>`
+2. Check ports: `Test-NetConnection -ComputerName IP -Port 22`
+3. Review firewall rules on targets
 
-1. **Reduce timeout:**
-   - Settings → Set Timeout → 30 seconds
+## Output Issues
 
-2. **Increase threads (port scan only):**
-   - Settings → Set Thread Count → 20
+### CSV file not created
 
-3. **Scan specific platforms:**
-   - Option 2 (Linux only) or Option 3 (Windows only)
-
-4. **Scan smaller subnets:**
-   - Use /25 (126 hosts) instead of /24 (254 hosts)
-
-### High Network Load
+**Causes:**
+- No write permission to output folder
+- Scan was cancelled before completion
+- Path doesn't exist
 
 **Solutions:**
+1. Check you have write access to the Axis folder
+2. Set a specific output path in Settings
+3. Let the scan complete fully
 
-1. **Reduce threads:**
-   - Settings → Set Thread Count → 5
+### CSV contains "Unknown" for all fields
 
-2. **Scan during off-hours:**
-   - Schedule for maintenance windows
+**Cause:** All scans failed
 
-3. **Scan in segments:**
-   - Split /24 into multiple /26 scans
+**Solution:**
+1. Check error messages in Scan Status column
+2. Review credential configuration
+3. Test single hosts to identify issues
 
----
+### CSV opens incorrectly in Excel
 
-## Platform-Specific Issues
+**Cause:** Encoding or delimiter issues
 
-### Linux Issues
+**Solution:**
+1. Open Excel
+2. Use Data → From Text/CSV
+3. Select UTF-8 encoding
+4. Verify comma delimiter
 
-**CentOS/RHEL 6 (older):**
-- May not have systemd-detect-virt
-- Use `virt-what` package instead
+## General Tips
 
-**Ubuntu/Debian:**
-- Same commands should work
-- May need `apt` instead of `dnf` for packages
+### Before Scanning
 
-### Solaris Issues
+1. Test credentials on 1-2 hosts manually
+2. Verify plink.exe is present
+3. Add all credential sets you'll need
+4. Check network connectivity to target subnet
 
-**Solaris 10:**
-- May lack some commands (virtinfo, sneep)
-- Serial number falls back to hostid
-- Some fields may show Unknown
+### During Scanning
 
-**Solaris 11:**
-- Most commands should work
-- Ensure sudo is configured
+1. Watch for patterns in failures
+2. Note which credential works for which hosts
+3. Let the scan complete even if some hosts fail
 
-**SPARC vs x86:**
-- Same script works for both
-- Hardware detection commands are compatible
+### After Scanning
 
-### Windows Issues
-
-**Windows Server Core:**
-- Should work (uses CIM, not GUI)
-
-**Windows 7/Server 2008:**
-- Requires WMF 5.1 update
-- WinRM may need manual configuration
-
-**Domain vs Workgroup:**
-- Domain: Use `DOMAIN\username`
-- Workgroup: Use local `username`
-- Both: Try `username@domain.local`
-
----
+1. Review the Scan Status column for failures
+2. Check OS Type column for misdetections
+3. Investigate "Unknown" values
+4. Re-scan failed hosts individually
 
 ## Getting Help
 
-### Collect Diagnostic Info
+If issues persist:
 
-When reporting issues, include:
-
-1. **AXIS version:**
-   - Shown in About menu (option 9)
-
-2. **Platform:**
-   - Windows version or Linux distribution
-
-3. **Error message:**
-   - Exact text from console or CSV
-
-4. **Test results:**
-   - Output from option 7 (Test Connection)
-
-### Debug Mode
-
-For verbose output, run manually:
-```powershell
-# Windows
-$VerbosePreference = "Continue"
-.\Axis.ps1
-
-# Linux
-pwsh -Command '$VerbosePreference = "Continue"; ./Axis.ps1'
-```
-
-### Report Issues
-
-Open an issue on GitHub:
-https://github.com/IICarrionII/Axis/issues
-
-Include:
-- Description of problem
-- Steps to reproduce
-- Expected vs actual behavior
-- Diagnostic info from above
+1. Note the exact error message
+2. Note which host/OS type fails
+3. Test the same credentials manually
+4. Check GitHub issues: https://github.com/IICarrionII/Axis/issues

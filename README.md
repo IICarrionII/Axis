@@ -2,198 +2,198 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue.svg)](https://docs.microsoft.com/en-us/powershell/)
-[![Bash](https://img.shields.io/badge/Bash-4.0%2B-green.svg)](https://www.gnu.org/software/bash/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20Solaris-lightgrey.svg)]()
 
-A cross-platform, menu-driven hardware and software inventory scanner designed for air-gapped enterprise networks. AXIS collects detailed system information from Linux, Solaris SPARC, and Windows systems without requiring internet connectivity.
+A cross-platform, menu-driven hardware and software inventory scanner designed for **air-gapped enterprise networks**. AXIS collects detailed system information from Linux, Solaris SPARC, and Windows systems without requiring internet connectivity.
 
-## Two Versions - Choose Based on Your Needs
+## ✨ Features
 
-| Scanner | Run FROM | Scans TO | Best For |
-|---------|----------|----------|----------|
-| **`Axis.ps1`** | Windows 10/11 | Linux, Solaris, **Windows** | **Primary scanner** - scans ALL platforms |
-| **`Axis.sh`** | Linux/Solaris | Linux, Solaris | Backup scanner when Windows unavailable |
-
-**Recommendation:** Use `Axis.ps1` from your Windows workstation as your primary scanner - it can scan all three platforms (Linux, Solaris, and Windows).
-
-```
-     ___   ___  __ ____  _____
-    /   |  \  \/ //  _/ / ___/
-   / /| |   \  /  / /   \__ \ 
-  / ___ |   / / _/ /   ___/ / 
- /_/  |_|  /_/ /___/  /____/  
-```
-
-## 🌟 Features
-
-- **Cross-Platform Execution**: Run from Windows 10/11, RHEL 8/9, or Solaris 10/11
-- **Multi-Target Scanning**: Scan Linux, Solaris SPARC, and Windows systems
-- **Air-Gapped Ready**: No internet dependencies - perfect for isolated networks
-- **Menu-Driven Interface**: No command-line flags to memorize
-- **Auto-Accept SSH Keys**: Automatic host key acceptance for trusted networks
-- **CSV Export**: Results exported in spreadsheet-compatible format
-
-## 📋 Collected Information
-
-| Field | Description |
-|-------|-------------|
-| Component Type | Server classification |
-| Hostname | System hostname |
-| IP Address | Network address |
-| Virtual Asset | Yes/No - VM detection |
-| Manufacturer | Hardware manufacturer |
-| Model Number | Hardware model |
-| Serial Number | Hardware serial |
-| OS/IOS | Operating system version |
-| FW Version | Firmware/BIOS version |
-| Memory Size | Total RAM |
-| Memory Type | Memory technology |
-| Kernel Version | OS kernel version |
+- **Multi-Platform Scanning** - Scan Linux, Solaris SPARC, and Windows from a single tool
+- **Multiple Credential Support** - Store multiple username/password pairs for different systems
+- **Single Host or Subnet Scanning** - Scan one IP or an entire subnet range
+- **Air-Gapped Ready** - No internet required, works in isolated networks
+- **Auto Host Key Acceptance** - SSH host keys are handled automatically
+- **CSV Export** - Results saved in CSV format for easy reporting
+- **Menu-Driven Interface** - Easy to use, no command-line arguments needed
 
 ## 🚀 Quick Start
 
-### Primary: Windows (Scans ALL Platforms)
+### 1. Download and Setup
 
-1. Download and extract AXIS to a folder (e.g., `C:\Tools\Axis\`)
-2. Download `plink.exe` from [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html) and place in same folder
-3. Rename `Axis.ps1.txt` to `Axis.ps1` (if needed)
-4. Open PowerShell and run:
-   ```powershell
-   cd C:\Tools\Axis
-   .\Axis.ps1
-   ```
-5. Select `[1] Quick Scan (All Platforms)`
-6. Enter subnet, username, and password when prompted
-
-### Backup: Linux/Solaris (Scans Linux & Solaris Only)
-
-```bash
-# Make executable and run
-chmod +x Axis.sh
-./Axis.sh
+```
+Axis/
+├── Axis.ps1          # Main scanner (rename from .txt if needed)
+├── plink.exe         # Required - download from putty.org
+└── (other files)
 ```
 
-**Note:** For password authentication on Linux, place `sshpass` in the `./tools/` folder or install it system-wide.
+### 2. Get plink.exe
 
-## 📦 Requirements
+Download `plink.exe` from [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html) and place it in the same folder as Axis.ps1.
 
-### Axis.ps1 (Windows) - PRIMARY SCANNER
+### 3. Run AXIS
 
-| Requirement | Notes |
-|-------------|-------|
-| Windows 10/11 or Server 2016+ | Required |
-| PowerShell 5.1+ | Built-in |
-| plink.exe | For SSH scanning - [Download from PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html) |
+```powershell
+# Open PowerShell and navigate to the Axis folder
+cd C:\Tools\Axis
 
-**Scans:** Linux ✅ | Solaris ✅ | Windows ✅
+# Run the script
+.\Axis.ps1
+```
 
-### Axis.sh (Linux/Solaris) - BACKUP SCANNER
+### 4. Add Credentials
 
-| Requirement | Notes |
-|-------------|-------|
-| Bash 4.0+ | Pre-installed on all Linux/Solaris |
-| SSH client | Pre-installed (`ssh`) |
-| sshpass (optional) | For password auth - place in `./tools/` folder |
+1. Select `[5] Manage Credentials`
+2. Select `[1] Add Credential`
+3. Add your Linux admin account (e.g., "Linux Admin" / linuxadmin / password)
+4. Add your Windows admin account (e.g., "Windows Admin" / winadmin / password)
 
-**Scans:** Linux ✅ | Solaris ✅ | Windows ❌
+### 5. Start Scanning
 
-### Target Systems
+- **Single Host:** Select `[2] Scan Single Host` → Enter IP
+- **Subnet:** Select `[1] Scan Subnet (All Platforms)` → Enter subnet (e.g., 192.168.1.0/24)
 
-| Platform | Requirements |
-|----------|--------------|
-| Linux | SSH enabled (port 22), user with sudo access |
-| Solaris | SSH enabled (port 22), user with sudo access |
-| Windows | WinRM enabled (port 5985) - Run `Enable-PSRemoting -Force` |
-
-## 📖 Menu Options
+## 📋 Menu Options
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      MAIN MENU                              │
 ├─────────────────────────────────────────────────────────────┤
-│   [1]  Quick Scan (All Platforms)                           │
-│   [2]  Scan Linux/Solaris Only                              │
-│   [3]  Scan Windows Only                                    │
-│   [4]  Custom Scan (Advanced Options)                       │
-│   [5]  Configure Settings                                   │
-│   [6]  View Current Settings                                │
-│   [7]  Test Connection to Single Host                       │
+│   [1]  Scan Subnet (All Platforms)                          │
+│   [2]  Scan Single Host                                     │
+│   [3]  Scan Subnet - Linux/Solaris Only                     │
+│   [4]  Scan Subnet - Windows Only                           │
+│                                                             │
+│   [5]  Manage Credentials                                   │
+│   [6]  Configure Settings                                   │
+│   [7]  View Current Settings                                │
+│                                                             │
 │   [8]  Help / Instructions                                  │
 │   [9]  About                                                │
+│                                                             │
 │   [0]  Exit                                                 │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## 🔧 Configuration
+## 📦 Requirements
 
-### Passwordless Sudo (Recommended)
+| Component | Requirement | Notes |
+|-----------|-------------|-------|
+| OS | Windows 10/11 or Server 2016+ | Run AXIS from here |
+| PowerShell | 5.1 or higher | Built-in on Windows 10+ |
+| plink.exe | Required for SSH | [Download from PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html) |
 
-For complete hardware information collection, configure passwordless sudo for `dmidecode`:
+### Target System Requirements
 
-**Linux (RHEL/CentOS):**
-```bash
-echo "username ALL=(ALL) NOPASSWD: /usr/sbin/dmidecode" | sudo tee /etc/sudoers.d/axis
+| Target OS | Protocol | Port | Requirements |
+|-----------|----------|------|--------------|
+| Linux | SSH | 22 | SSH enabled, user with sudo access |
+| Solaris | SSH | 22 | SSH enabled, user with access to prtconf |
+| Windows | WMI/DCOM | 135 | Admin credentials, WMI enabled (default) |
+
+## 📊 Data Collected
+
+AXIS collects the following information from each system:
+
+| Field | Description |
+|-------|-------------|
+| Hostname | System hostname |
+| IP Address | Target IP address |
+| OS Type | Linux, Solaris, or Windows |
+| OS/IOS | Full OS name and version |
+| Virtual Asset | Yes/No - Virtual machine detection |
+| Manufacturer | Hardware manufacturer |
+| Model Number | Hardware model |
+| Serial Number | System serial number |
+| Memory Size | Total RAM |
+| Memory Type | RAM type (DDR4, etc.) |
+| Kernel Version | OS kernel/build version |
+| Firmware Version | BIOS/firmware version |
+| Scan Status | Success or failure reason |
+
+## 🔐 Multiple Credentials
+
+AXIS supports multiple credential sets for environments with different admin accounts:
+
+1. **Add credentials** via `[5] Manage Credentials`
+2. **Label each credential** (e.g., "Linux Admin", "Windows Admin", "Solaris Root")
+3. **During scanning**, AXIS tries each credential until one works
+4. **Different hosts** can authenticate with different credentials automatically
+
+Example setup:
+```
+Credential 1: "Linux Admin"    → linuxadmin / password1
+Credential 2: "Windows Admin"  → DOMAIN\winadmin / password2
+Credential 3: "Solaris Admin"  → root / password3
 ```
 
-**Solaris:**
-```bash
-echo "username ALL=(ALL) NOPASSWD: /usr/sbin/prtconf, /usr/sbin/prtdiag, /usr/sbin/sneep" | sudo tee /etc/sudoers.d/axis
-```
+## 📁 Output
 
-### Enable WinRM on Windows Targets
+Results are saved as CSV files:
 
-Run as Administrator on each Windows target:
-```powershell
-Enable-PSRemoting -Force
-```
+- **Subnet scan:** `AXIS_Inventory_YYYYMMDD_HHMMSS.csv`
+- **Single host:** `AXIS_SingleHost_192_168_1_100_YYYYMMDD_HHMMSS.csv`
 
-## 📁 Project Structure
-
-```
-Axis/
-├── Axis.ps1              # PowerShell - PRIMARY (Windows → All platforms)
-├── Axis.sh               # Bash - BACKUP (Linux/Solaris → Linux/Solaris)
-├── plink.exe             # Place here for Windows scanning (download separately)
-├── tools/
-│   ├── README.txt        # Instructions for bundling tools
-│   └── sshpass           # Place here for Linux password auth (optional)
-├── README.md
-├── LICENSE
-├── CHANGELOG.md
-├── docs/
-│   ├── INSTALL.md
-│   ├── USAGE.md
-│   └── TROUBLESHOOTING.md
-└── examples/
-    └── sample_output.csv
-```
-
-## 🔍 Example Output
+### Sample Output
 
 ```csv
 "Component Type","Hostname","IP Address","Virtual Asset","Manufacturer","Model Number","Serial Number","OS/IOS","FW Version","Memory Size","Memory Type","Kernel Version","OS Type","Scan Status"
-"Server","webserver01","192.168.1.10","Yes","VMware, Inc.","VMware Virtual Platform","VMware-42 1a...","Red Hat Enterprise Linux 8.9","6.00","16Gi","DDR4","4.18.0-513.el8.x86_64","Linux","Success"
-"Server","dbserver01","192.168.1.20","No","Dell Inc.","PowerEdge R640","ABC1234","Red Hat Enterprise Linux 9.3","2.12.2","64Gi","DDR4","5.14.0-362.el9.x86_64","Linux","Success"
-"Server","solaris01","192.168.1.30","No","Oracle Corporation","SPARC T5-2","1234567890","SunOS 5.11 Oracle Solaris 11.4","OBP 4.38.0","128 GB","Unknown","11.4","Solaris","Success"
+"Server","webserver01","192.168.1.10","Yes","VMware, Inc.","VMware Virtual Platform","VMware-42 1a...","Red Hat Enterprise Linux 8.9","6.00","7.6Gi","DDR4","4.18.0-513.el8.x86_64","Linux","Success"
+"Server","dbserver01","192.168.1.20","No","Dell Inc.","PowerEdge R740","ABC1234","Windows Server 2019 10.0.17763","2.12.0","64 GB","Unknown","17763","Windows","Success"
 ```
 
-## 🐛 Troubleshooting
+## 🔧 Troubleshooting
 
-### plink.exe not found (Windows)
-Download `plink.exe` from [PuTTY downloads](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html) and place it in the same folder as `Axis.ps1`.
+### SSH Host Key Prompt
 
-### SSH Permission Denied
-1. Verify username and password are correct
-2. Check SSH configuration: `grep PasswordAuthentication /etc/ssh/sshd_config`
-3. Ensure `PasswordAuthentication yes` is set
+If plink asks to cache a host key, AXIS will open a window where you can type `y` to accept. This only happens once per host.
 
-### Hardware Info Shows "Unknown"
-Configure passwordless sudo for dmidecode (see Configuration section above).
+### Windows WMI Access Denied
 
-### Windows Hosts Not Detected
-Ensure WinRM is enabled on target: `Test-WSMan -ComputerName <ip>`
+Ensure the firewall allows WMI:
+```cmd
+netsh advfirewall firewall set rule group="Windows Management Instrumentation (WMI)" new enable=yes
+```
 
-## 📝 License
+### Solaris Commands Return Unknown
+
+Make sure the scanning user has access to:
+- `/usr/sbin/prtconf`
+- `/usr/bin/hostid`
+- `hostname`
+
+### Credential Issues
+
+If scans fail with authentication errors:
+1. Verify credentials work manually (SSH/RDP to the target)
+2. Check that you have the right username format (DOMAIN\user for Windows)
+3. Add multiple credentials if different systems use different accounts
+
+## 📂 Project Structure
+
+```
+Axis/
+├── Axis.ps1              # Main PowerShell scanner
+├── Axis.sh               # Bash version (Linux/Solaris only)
+├── plink.exe             # Place here (download from putty.org)
+├── README.md             # This file
+├── LICENSE               # MIT License
+├── CHANGELOG.md          # Version history
+├── docs/
+│   ├── INSTALL.md        # Detailed installation guide
+│   ├── USAGE.md          # Usage examples
+│   └── TROUBLESHOOTING.md
+├── examples/
+│   └── sample_output.csv
+└── tools/
+    └── README.txt        # Instructions for Bash version tools
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
@@ -203,14 +203,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - GitHub: [@IICarrionII](https://github.com/IICarrionII)
 
-## 🤝 Contributing
+## 🙏 Acknowledgments
 
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/IICarrionII/Axis/issues).
-
-## ⭐ Show Your Support
-
-Give a ⭐️ if this project helped you!
-
----
-
-*Built for IT asset management and compliance reporting in enterprise environments.*
+- [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) for plink.exe
+- Designed for enterprise IT teams managing air-gapped networks

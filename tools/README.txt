@@ -1,14 +1,22 @@
 AXIS Tools Folder
 =================
 
+This folder is for the Bash version (Axis.sh) only.
+The PowerShell version (Axis.ps1) uses plink.exe which goes in the main folder.
+
+For PowerShell Version (Axis.ps1):
+----------------------------------
+Place plink.exe in the MAIN Axis folder (same folder as Axis.ps1)
+Download from: https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html
+
+For Bash Version (Axis.sh):
+---------------------------
 Place the following binaries here for self-contained operation:
 
-For Linux (RHEL/CentOS):
-  - sshpass   (copy from: /usr/bin/sshpass after installing with yum)
-  - expect    (copy from: /usr/bin/expect after installing with yum)
+  - sshpass   (for password authentication)
+  - expect    (alternative for password auth)
 
 How to get these binaries for air-gapped systems:
--------------------------------------------------
 
 Option 1: Copy from a system that has them installed
   # On a system with internet, install then copy:
@@ -29,4 +37,4 @@ Option 2: Download RPMs and extract
 Note: Make sure binaries are executable:
   chmod +x sshpass expect
 
-The script will automatically detect tools in this folder.
+The Axis.sh script will automatically detect tools in this folder.

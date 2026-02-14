@@ -2,63 +2,72 @@
 
 All notable changes to AXIS will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [1.0.0] - 2024-12-19
+## [1.1.0] - 2025-01-07
 
 ### Added
-- Initial release of AXIS (Asset eXploration & Inventory Scanner)
-- **Two versions:**
-  - `Axis.ps1` - PowerShell version for Windows
-  - `Axis.sh` - Pure Bash version for Linux/Solaris (ZERO dependencies)
-- Cross-platform support (Windows, Linux, Solaris)
-- Menu-driven user interface
-- Linux scanning via SSH
-- Solaris 10/11 SPARC support
-- Windows scanning via WinRM (PowerShell version only)
-- Auto-accept SSH host keys for air-gapped networks
-- CSV export functionality
-- Single host connection testing
+- **Multiple Credential Support** - Store and use multiple username/password pairs
+  - Add, view, and remove credentials via menu
+  - AXIS automatically tries each credential until one works
+  - Perfect for environments with different admin accounts for Linux/Windows
+- **Single Host Scan** - New option to scan just one IP address
+  - Great for adding new hosts to your environment
+  - Shows detailed results on screen
+  - Option to save to CSV
+- **Credential Labels** - Name each credential (e.g., "Linux Admin", "Windows Admin")
+
+### Changed
+- **Improved Solaris Scanning** - Simplified commands for better remote execution
+  - Removed complex sudo pipes that failed remotely
+  - Better compatibility with Solaris 10 and 11
+- **Menu Reorganization** - Clearer menu structure
+  - Scan options grouped together
+  - Credential management has its own submenu
+- **Version bumped to 1.1.0**
+
+### Fixed
+- Solaris prtconf commands now work reliably over SSH
+- Host key caching prompts handled properly
+- Windows WMI fallback improved for older systems
+
+## [1.0.0] - 2025-01-06
+
+### Added
+- Initial release of AXIS
+- **Multi-Platform Scanning**
+  - Linux (RHEL, CentOS, Ubuntu, etc.) via SSH/plink
+  - Solaris SPARC via SSH/plink
+  - Windows via WMI/DCOM
+- **Menu-Driven Interface** - Easy to use without command-line arguments
+- **Air-Gapped Network Support** - No internet connectivity required
+- **CSV Export** - Results saved in standard CSV format
+- **Auto Host Key Handling** - SSH host keys managed automatically
+- **Port Detection** - Automatic discovery of SSH (22) and WMI (135) hosts
+
+### Features
+- Subnet scanning with CIDR notation
+- Connection testing for single hosts
 - Configurable timeout settings
-- Progress indicators during scanning
+- Progress indicators during scans
+- OS type auto-detection
+- Virtual machine detection
+- Hardware inventory (manufacturer, model, serial)
+- Software inventory (OS, kernel, firmware)
 
-### Bash Version Features
-- Zero dependencies - uses only built-in Linux/Solaris tools
-- Works on RHEL 6/7/8/9, CentOS, Solaris 10/11
-- No PowerShell or sshpass required
-- Portable - just copy and run
+## [0.9.0] - 2025-01-05 (Pre-release)
 
-### Supported Platforms (Run From)
-- Windows 10/11
-- Windows Server 2016+
-- RHEL 8/9
-- Solaris 10/11
+### Added
+- Project renamed from PNIS to AXIS
+- PowerShell version created (Axis.ps1)
+- Bash version created (Axis.sh)
+- Basic scanning functionality
+- ASCII banner and menu system
 
-### Supported Targets (Scan To)
-- Linux (RHEL, CentOS, Fedora, Ubuntu, Debian, etc.)
-- Solaris 10/11 SPARC
-- Windows Server/Desktop
+---
 
-### Data Collected
-- Hostname
-- IP Address
-- Virtual/Physical status
-- Manufacturer
-- Model Number
-- Serial Number
-- Operating System
-- Kernel Version
-- Firmware/BIOS Version
-- Memory Size
-- Memory Type
+## Version Numbering
 
-## [Unreleased]
+AXIS uses [Semantic Versioning](https://semver.org/):
 
-### Planned
-- Parallel scanning for faster performance
-- HTML report generation
-- Scheduled scan support
-- Network device (Cisco, Juniper) support
-- Custom field collection
-- Scan profiles/templates
+- **MAJOR** version for incompatible changes
+- **MINOR** version for new functionality (backwards compatible)
+- **PATCH** version for bug fixes (backwards compatible)

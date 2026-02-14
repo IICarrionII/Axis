@@ -1,216 +1,159 @@
 # AXIS Installation Guide
 
-This guide provides detailed installation instructions for AXIS on all supported platforms.
+## Prerequisites
 
-## Table of Contents
-
-1. [Windows Installation](#windows-installation)
-2. [Linux Installation (RHEL/CentOS)](#linux-installation-rhelcentos)
-3. [Solaris Installation](#solaris-installation)
-4. [Air-Gapped Network Installation](#air-gapped-network-installation)
-5. [Verifying Installation](#verifying-installation)
-
----
-
-## Windows Installation
-
-### Requirements
-
+### Windows Workstation (Required)
 - Windows 10/11 or Windows Server 2016+
-- PowerShell 5.1 or higher (pre-installed)
-- plink.exe (for SSH scanning)
+- PowerShell 5.1 or higher (built-in on Windows 10+)
+- Administrator access (for initial setup)
+
+### plink.exe (Required for Linux/Solaris scanning)
+- Download from: https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html
+- Direct link: Look for "plink.exe" under "Alternative binary files"
+
+## Installation Steps
 
 ### Step 1: Download AXIS
 
-Download `Axis.ps1` from the [GitHub releases page](https://github.com/IICarrionII/Axis/releases) or clone the repository:
-
+**Option A: From GitHub**
 ```powershell
+# Clone the repository (if git is available)
 git clone https://github.com/IICarrionII/Axis.git
-cd Axis
+
+# Or download the ZIP from GitHub and extract
 ```
+
+**Option B: From ZIP file**
+1. Download Axis-main.zip
+2. Extract to a folder (e.g., `C:\Tools\Axis\`)
 
 ### Step 2: Download plink.exe
 
-plink.exe is required for SSH connections to Linux and Solaris systems.
+1. Go to https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html
+2. Scroll to "Alternative binary files"
+3. Download `plink.exe` (64-bit or 32-bit based on your system)
+4. Place `plink.exe` in the same folder as `Axis.ps1`
 
-1. Visit [PuTTY Download Page](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html)
-2. Download `plink.exe` (64-bit recommended)
-3. Place `plink.exe` in the same folder as `Axis.ps1`
+**For Air-Gapped Networks:**
+1. Download plink.exe on an internet-connected computer
+2. Transfer via approved method (USB, secure file transfer)
+3. Place in the Axis folder
 
-### Step 3: Set Execution Policy (if needed)
+### Step 3: Rename Script (if needed)
+
+If you received `Axis.ps1.txt` (for email compatibility):
+```powershell
+# In PowerShell
+Rename-Item Axis.ps1.txt Axis.ps1
+
+# Or right-click the file and rename manually
+```
+
+### Step 4: Verify Folder Structure
+
+Your Axis folder should look like this:
+```
+C:\Tools\Axis\
+├── Axis.ps1          ← Main script
+├── plink.exe         ← Required for SSH
+├── README.md
+├── LICENSE
+├── CHANGELOG.md
+├── docs\
+├── examples\
+└── tools\
+```
+
+### Step 5: Set Execution Policy (if needed)
+
+If PowerShell blocks script execution:
 
 ```powershell
+# Option 1: Bypass for current session only (recommended)
+powershell -ExecutionPolicy Bypass -File .\Axis.ps1
+
+# Option 2: Set policy for current user
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-### Step 4: Run AXIS
+### Step 6: Run AXIS
 
 ```powershell
+cd C:\Tools\Axis
 .\Axis.ps1
 ```
 
----
+## First-Time Setup
 
-## Linux Installation (RHEL/CentOS)
+### 1. Add Credentials
 
-### Requirements
+When AXIS starts:
+1. Select `[5] Manage Credentials`
+2. Select `[1] Add Credential`
+3. Enter a label (e.g., "Linux Admin")
+4. Enter username
+5. Enter password
+6. Repeat for additional credential sets (Windows admin, etc.)
 
-- RHEL 8/9, CentOS Stream, Fedora, or compatible distribution
-- PowerShell 7+
-- sshpass (for password authentication)
+### 2. Test Connection
 
-### Step 1: Install PowerShell
+Before scanning a subnet:
+1. Select `[2] Scan Single Host`
+2. Enter an IP address you know works
+3. Verify the scan completes successfully
 
-**RHEL 8/9:**
-```bash
-# Register Microsoft repository
-curl https://packages.microsoft.com/config/rhel/8/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
+### 3. Configure Settings (Optional)
 
-# Install PowerShell
-sudo dnf install -y powershell
-```
+Select `[6] Configure Settings` to:
+- Set a default subnet
+- Set output file location
+- Adjust timeout (default: 60 seconds)
 
-**Fedora:**
-```bash
-sudo dnf install -y powershell
-```
+## Target System Requirements
 
-### Step 2: Install sshpass
+### Linux Systems
+- SSH server running (port 22)
+- User account with sudo access (for dmidecode)
+- No special software needed on targets
 
-```bash
-sudo dnf install -y sshpass
-```
+### Solaris Systems
+- SSH server running (port 22)
+- User account with access to:
+  - `/usr/sbin/prtconf`
+  - `/usr/bin/hostid`
+  - `hostname`
 
-### Step 3: Download AXIS
+### Windows Systems
+- WMI enabled (default on Windows)
+- Port 135 open (DCOM/RPC)
+- Admin credentials
+- Firewall may need to allow remote WMI:
+  ```cmd
+  netsh advfirewall firewall set rule group="Windows Management Instrumentation (WMI)" new enable=yes
+  ```
 
-```bash
-git clone https://github.com/IICarrionII/Axis.git
-cd Axis
-chmod +x Axis.ps1
-```
+## Troubleshooting Installation
 
-### Step 4: Run AXIS
+### "plink.exe not found"
+- Ensure plink.exe is in the same folder as Axis.ps1
+- Verify it's named exactly `plink.exe` (not plink(1).exe, etc.)
 
-```bash
-pwsh ./Axis.ps1
-```
+### "Script cannot be loaded because running scripts is disabled"
+- Use: `powershell -ExecutionPolicy Bypass -File .\Axis.ps1`
+- Or: `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`
 
----
+### "Access Denied" when running
+- Right-click PowerShell → "Run as Administrator"
+- Or ensure your user has write access to the Axis folder
 
-## Solaris Installation
+## Updating AXIS
 
-### Requirements
+To update to a new version:
+1. Download the new Axis.ps1
+2. Replace the old Axis.ps1 in your folder
+3. Keep plink.exe (no need to re-download)
+4. Your credentials will need to be re-entered (not saved between sessions)
 
-- Solaris 10 or 11
-- PowerShell 7+ (if available) OR run AXIS from Windows/Linux
+## Uninstallation
 
-### Option A: Run from Windows/Linux
-
-The recommended approach is to run AXIS from a Windows or Linux management workstation and scan Solaris systems remotely.
-
-### Option B: Install PowerShell on Solaris 11
-
-PowerShell can be installed on Solaris 11 using pkg:
-
-```bash
-# Check if available in your Solaris version
-pkg search powershell
-```
-
-Note: PowerShell availability on Solaris may be limited. Running from Windows or Linux is recommended.
-
----
-
-## Air-Gapped Network Installation
-
-For systems without internet access, follow these steps to transfer required files.
-
-### Windows Air-Gapped Installation
-
-**On internet-connected system:**
-
-1. Download `Axis.ps1` from GitHub
-2. Download `plink.exe` from PuTTY website
-3. Copy both files to USB drive or approved transfer medium
-
-**On air-gapped system:**
-
-1. Copy `Axis.ps1` and `plink.exe` to desired folder (e.g., `C:\Tools\Axis\`)
-2. Run PowerShell and navigate to folder
-3. Execute: `.\Axis.ps1`
-
-### Linux Air-Gapped Installation
-
-**On internet-connected RHEL system:**
-
-```bash
-# Download PowerShell RPM
-dnf download --resolve powershell
-
-# Download sshpass RPM
-dnf download --resolve sshpass
-
-# Download AXIS
-git clone https://github.com/IICarrionII/Axis.git
-```
-
-**Transfer all files to air-gapped system, then:**
-
-```bash
-# Install PowerShell
-sudo rpm -ivh powershell*.rpm
-
-# Install sshpass
-sudo rpm -ivh sshpass*.rpm
-
-# Copy AXIS files
-chmod +x Axis.ps1
-```
-
----
-
-## Verifying Installation
-
-### Windows Verification
-
-```powershell
-# Check PowerShell version
-$PSVersionTable.PSVersion
-
-# Check plink.exe is accessible
-.\plink.exe -V
-
-# Run AXIS
-.\Axis.ps1
-```
-
-### Linux Verification
-
-```bash
-# Check PowerShell version
-pwsh --version
-
-# Check sshpass
-which sshpass
-
-# Check SSH
-which ssh
-
-# Run AXIS
-pwsh ./Axis.ps1
-```
-
-### Test Single Host
-
-1. Run AXIS
-2. Select option `[7]` - Test Connection to Single Host
-3. Enter a known working IP, username, and password
-4. Verify connection succeeds
-
----
-
-## Next Steps
-
-- See [USAGE.md](USAGE.md) for detailed usage instructions
-- See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues
-- Configure [passwordless sudo](../README.md#configuration) for complete hardware info collection
+Simply delete the Axis folder. AXIS does not install anything system-wide.
